@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { getArtworkDetail, Artwork, ProvenanceEvent } from '../services/api';
 import { ArrowLeft, FileText, Anchor, BookOpen } from 'lucide-react';
 
+import { getDeterministicColor } from '../utils/colorUtils';
+
 const ArtworkDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const [artwork, setArtwork] = useState<Artwork | null>(null);
@@ -37,7 +39,13 @@ const ArtworkDetail: React.FC = () => {
                         {artwork.image ? (
                             <img src={artwork.image} alt={artwork.title} className="w-full h-full object-cover" />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+                            <div className="w-full h-full relative">
+                                <div
+                                    className="absolute inset-0 z-10 opacity-30 mix-blend-multiply"
+                                    style={{ backgroundColor: getDeterministicColor(artwork.title) }}
+                                />
+                                <img src="/assets/placeholder-artwork.png" alt="No image available" className="w-full h-full object-cover" />
+                            </div>
                         )}
                     </div>
                 </div>

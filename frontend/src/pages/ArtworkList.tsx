@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { getArtworks, Artwork } from '../services/api';
 import { Search, Filter } from 'lucide-react';
 
+import { getDeterministicColor } from '../utils/colorUtils';
+
 const ArtworkList: React.FC = () => {
     const [artworks, setArtworks] = useState<Artwork[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -65,8 +67,16 @@ const ArtworkList: React.FC = () => {
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                         />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                                            No Image
+                                        <div className="w-full h-full relative">
+                                            <div
+                                                className="absolute inset-0 z-10 opacity-30 mix-blend-multiply"
+                                                style={{ backgroundColor: getDeterministicColor(art.title) }}
+                                            />
+                                            <img
+                                                src="/assets/placeholder-artwork.png"
+                                                alt="No image available"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            />
                                         </div>
                                     )}
                                 </div>

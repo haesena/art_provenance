@@ -52,6 +52,7 @@ def api_me(request):
         return JsonResponse({
             'username': request.user.username,
             'email': request.user.email,
-            'is_authenticated': True
+            'is_authenticated': True,
+            'is_staff': request.user.is_staff
         })
     return JsonResponse({'is_authenticated': False}, status=200)

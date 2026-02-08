@@ -52,6 +52,7 @@ export interface User {
   username: string;
   email: string;
   is_authenticated: boolean;
+  is_staff: boolean;
 }
 
 export const getArtworks = async () => {

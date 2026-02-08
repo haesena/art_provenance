@@ -1,11 +1,16 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { BookOpen, Database, BarChart2, LogOut, User as UserIcon } from 'lucide-react';
+import { BookOpen, Database, BarChart2, LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Layout: React.FC = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
+
+    // In local dev, admin is on port 8000. In prod, it's on the same host.
+    const adminUrl = window.location.port === '5173'
+        ? 'http://localhost:8000/admin/'
+        : '/admin/';
 
     return (
         <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
@@ -13,7 +18,7 @@ const Layout: React.FC = () => {
             <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm">
                 <div className="p-6 border-b border-slate-100 mb-4">
                     <h1 className="text-xl font-bold tracking-tight text-indigo-600 flex items-center gap-2">
-                        <BookOpen className="w-6 h-6" />
+                        < BookOpen className="w-6 h-6" />
                         Art Provenance
                     </h1>
                 </div>
@@ -39,6 +44,18 @@ const Layout: React.FC = () => {
                         <BarChart2 className="w-5 h-5" />
                         Analysis
                     </Link>
+
+                    {user?.is_staff && (
+                        <a
+                            href={adminUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-3 px-4 py-2.5 text-slate-600 rounded-lg hover:bg-slate-50 hover:text-indigo-700 transition-all"
+                        >
+                            <Settings className="w-5 h-5" />
+                            Admin Panel
+                        </a>
+                    )}
                 </nav>
 
                 {/* User Section at Bottom */}

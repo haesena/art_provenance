@@ -23,7 +23,7 @@ RUN mkdir -p /app/static
 
 # Collect static files
 # Use a dummy SECRET_KEY for collectstatic to work during build
-RUN DJANGO_SECRET_KEY=dummy-key-for-build python manage.py collectstatic --noinput
+RUN SECRET_KEY=dummy-key-for-collectstatic python manage.py collectstatic --noinput
 
 # Copy entrypoint script
 COPY entrypoint.sh /app/

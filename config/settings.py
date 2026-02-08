@@ -133,16 +133,19 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 import dj_database_url
 
-# We prioritize individual environment variables for a robust production setup.
-# This avoids URL-parsing errors with special characters in passwords.
-if os.environ.get('POSTGRES_PASSWORD'):
+DB_HOST = os.environ.get('DB_HOST')
+POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
+
+# We only use Postgres if a host is explicitly provided (like 'db' in Docker or an IP in Production).
+# If no host is provided, we fall back to SQLite for easy local development.
+if POSTGRES_PASSWORD and DB_HOST:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('POSTGRES_DB', 'provenance'),
             'USER': os.environ.get('POSTGRES_USER', 'provenance_user'),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', 'db'),
+            'PASSWORD': POSTGRES_PASSWORD,
+            'HOST': DB_HOST,
             'PORT': os.environ.get('DB_PORT', '5432'),
             'CONN_MAX_AGE': 600,
         }
@@ -156,7 +159,7 @@ elif os.environ.get('DATABASE_URL'):
         )
     }
 else:
-    # Default to SQLite for local development
+    # Default to SQLite for local development (no DB_HOST provided)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

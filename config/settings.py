@@ -89,17 +89,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 import dj_database_url
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-        )
-    }
-else:
-    # Fallback to individual variables if DATABASE_URL is missing or malformed
+# We prioritize individual environment variables for a robust production setup.
+# This avoids URL-parsing errors with special characters in passwords.
+if os.environ.get('POSTGRES_PASSWORD'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -111,9 +103,16 @@ else:
             'CONN_MAX_AGE': 600,
         }
     }
-
-# For simple SQLite local development if no Postgres vars are found
-if not os.environ.get('POSTGRES_PASSWORD') and not DATABASE_URL:
+elif os.environ.get('DATABASE_URL'):
+    # Fallback for environments that provided a pre-formatted URL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+        )
+    }
+else:
+    # Default to SQLite for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

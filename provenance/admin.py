@@ -85,6 +85,10 @@ class ArtworkAdmin(admin.ModelAdmin):
     filter_horizontal = ('groups',)
     inlines = [ProvenanceEventInline, ArtworkRelationshipInline, ImageInline]
 
+    class Media:
+        js = ('provenance/js/admin_resizer.js',)
+
+
 @admin.register(Source)
 class SourceAdmin(admin.ModelAdmin):
     list_display = ('citation',)

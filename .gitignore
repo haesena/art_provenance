@@ -12,7 +12,7 @@ ENV/
 # Django
 db.sqlite3
 media/
-static/
+/static/
 
 # Node
 node_modules/

@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+
+# Django
+db.sqlite3
+media/
+static/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.json.xlsx
+*.xlsx
+*.xls
+*.csv
+*.log
+data.json

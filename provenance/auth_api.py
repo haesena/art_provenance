@@ -31,6 +31,8 @@ def api_login(request):
         return JsonResponse({
             'username': user.username,
             'email': user.email,
+            'is_authenticated': True,
+            'is_staff': user.is_staff,
         })
     else:
         return JsonResponse({'error': 'Invalid credentials'}, status=401)

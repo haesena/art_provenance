@@ -19,12 +19,18 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from provenance import api
+from provenance import api, auth_api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/artworks/', api.artwork_list),
     path('api/artworks/<int:pk>/', api.artwork_detail),
+    
+    # Auth API
+    path('api/auth/csrf/', auth_api.get_csrf_token),
+    path('api/auth/login/', auth_api.api_login),
+    path('api/auth/logout/', auth_api.api_logout),
+    path('api/auth/me/', auth_api.api_me),
 ]
 
 if settings.DEBUG:

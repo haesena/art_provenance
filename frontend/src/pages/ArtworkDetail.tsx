@@ -26,8 +26,8 @@ const ArtworkDetail: React.FC = () => {
     if (!artwork) return <div className="p-8 text-center">Artwork not found</div>;
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 pb-12">
-            <Link to="/" className="inline-flex items-center text-sm text-gray-500 hover:text-indigo-600 mb-4 transition-colors">
+        <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 pb-12">
+            <Link to="/" className="inline-flex items-center text-sm text-gray-500 hover:text-indigo-600 mb-2 md:mb-4 transition-colors">
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Collection
             </Link>
 

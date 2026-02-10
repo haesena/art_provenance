@@ -10,43 +10,60 @@ A specialized web application designed for PhD research to track, visualize, and
 
 ---
 
-## Local Development (Quick Start)
+## 🚀 Getting Started (Local Setup)
 
-The easiest way to run the project locally is using the provided automation script.
+There are two ways to run this project locally, depending on your comfort level with Python and Node.js.
 
-### Prerequisites
-- **Python 3.12**
-- **Node.js 20+**
-- **Docker** (for the PostgreSQL database)
+### Path A: The Easy Way (Docker Only) 🐳
+**Best for:** Someone who wants to run the app quickly without managing Python or Node.js versions.
 
-### Setup
-1. **Clone the repository**:
+1. **Install Docker**: Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+2. **Clone the repository**:
    ```bash
    git clone git@github.com:haesena/art_provenance.git
    cd art_provenance
    ```
-
-2. **Environment Variables**:
-   Copy the example environment file and fill in your secrets (especially `SECRET_KEY` and `POSTGRES_PASSWORD`):
+3. **Set your Environment Variables**:
    ```bash
    cp .env.example .env
+   # (Optional) Open .env and change the POSTGRES_PASSWORD
    ```
+4. **Launch the entire stack**:
+   ```bash
+   docker compose up --build
+   ```
+5. **Access the App**:
+   - **Frontend**: [http://localhost](http://localhost) (or port 80)
+   - **Admin Panel**: [http://localhost/admin/](http://localhost/admin/)
 
-3. **Initialize the Virtual Environment**:
-   Ensure you have a virtual environment at `./venv`:
+---
+
+### Path B: The Developer Way (Manual Setup) 🛠️
+**Best for:** Active development where you want "Hot Reloading" for your code changes.
+
+#### Prerequisites
+- **Python 3.12**
+- **Node.js 20+ (with npm)**
+- **Docker** (Still needed just for the database)
+
+#### Setup Steps
+1. **Initialize Python**:
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
    ```
-
-4. **Launch with dev.sh**:
-   This script starts the Postgres database in Docker, runs migrations, and launches both the backend and frontend:
+2. **Configure Environment**:
+   ```bash
+   cp .env.example .env
+   ```
+3. **Launch with Automation**:
+   Use our custom script to start the DB, run migrations, and launch both Backend and Frontend:
    ```bash
    ./dev.sh
    ```
 
-- **Frontend**: [http://localhost:5173](http://localhost:5173)
+- **Frontend (Hot Reload)**: [http://localhost:5173](http://localhost:5173)
 - **Backend API/Admin**: [http://localhost:8000](http://localhost:8000)
 
 ---
@@ -76,6 +93,14 @@ For production or a production-like environment, the entire stack (Nginx, React,
 - **Frontend**: React (TypeScript), Vite, Tailwind CSS, Lucide Icons
 - **Database**: PostgreSQL
 - **DevOps**: Docker, Nginx, WhiteNoise (for static assets)
+
+## 📚 Documentation for Developers
+
+For detailed information on how to extend and maintain the application, see:
+
+- [Backend Documentation (Data Models & API)](file:///home/haesen/.gemini/antigravity/scratch/art_provenance/provenance/README.md)
+- [Frontend Documentation (Pages & UI Components)](file:///home/haesen/.gemini/antigravity/scratch/art_provenance/frontend/README.md)
+- [Portainer Deployment Guide](file:///home/haesen/.gemini/antigravity/brain/6a7a9712-5a9a-4b59-8c71-f5307c23f2d6/portainer_guide.md)
 
 ---
 

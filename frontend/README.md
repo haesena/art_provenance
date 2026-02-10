@@ -1,30 +1,66 @@
-# React + TypeScript + Vite
+# Art Provenance Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a modern, responsive React application built with Vite and Tailwind CSS. It provides a researcher-friendly interface for browsing and analyzing art provenance data.
 
-Currently, two official plugins are available:
+## Tech Stack
+- **Framework**: React 18 (with TypeScript)
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **API Client**: Axios
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Directory Structure
+- `src/components/`: Reusable UI components (e.g., `Layout.tsx`).
+- `src/pages/`: Main page-level components (Artworks, Details, Login).
+- `src/services/`: API integration layer (`api.ts`).
+- `src/context/`: Global state management (Authentication).
+- `src/utils/`: Helper functions (e.g., color generators).
 
-## Expanding the ESLint configuration
+## Adding a New Page
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+To add a new view (e.g., a "Researcher Profile" page):
 
-- Configure the top-level `parserOptions` property like this:
+1. **Create the Component**: Add a new file in `src/pages/ResearcherProfile.tsx`:
+   ```tsx
+   import React from 'react';
+   
+   const ResearcherProfile: React.FC = () => {
+       return <div className="p-8"><h1>Profile</h1></div>;
+   };
+   export default ResearcherProfile;
+   ```
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+2. **Register the Route**: Open `src/App.tsx` and add your new route inside the `ProtectedRoute`:
+   ```tsx
+   <Route path="profile" element={<ResearcherProfile />} />
+   ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+3. **Add to Sidebar**: Open `src/components/Layout.tsx` and add a link to the `navLinks` array:
+   ```typescript
+   const navLinks = [
+       ...
+       { to: '/profile', icon: User, label: 'Profile', active: location.pathname === '/profile' },
+   ];
+   ```
+
+## API Integration
+
+All backend communication should go through `src/services/api.ts`.
+
+1. **Add the Method**:
+   ```typescript
+   export const getProfile = async () => {
+       const response = await api.get('/auth/profile/');
+       return response.data;
+   };
+   ```
+
+2. **Use in Component**:
+   ```typescript
+   useEffect(() => {
+       getProfile().then(data => setProfile(data));
+   }, []);
+   ```
+
+## Responsiveness
+The app uses a **Mobile-First** approach. Use Tailwind's responsive prefixes (e.g., `md:grid-cols-2`) to ensure content looks great on both mobile and desktop.

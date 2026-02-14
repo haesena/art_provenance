@@ -48,11 +48,18 @@ There are two ways to run this project locally, depending on your comfort level 
 
 #### Setup Steps
 1. **Initialize Python**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
+   - **Linux/macOS**:
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     pip install -r requirements.txt
+     ```
+   - **Windows (PowerShell)**:
+     ```powershell
+     python -m venv venv
+     .\venv\Scripts\Activate.ps1
+     pip install -r requirements.txt
+     ```
 2. **Configure Environment**:
    ```bash
    cp .env.example .env
@@ -62,9 +69,26 @@ There are two ways to run this project locally, depending on your comfort level 
    ```bash
    ./dev.sh
    ```
+   On Windows (PowerShell):
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ./dev.ps1
+   ```
+   *Alternatively, run once without changing policy:*
+   ```powershell
+   PowerShell -ExecutionPolicy Bypass -File .\dev.ps1
+   ```
 
 - **Frontend (Hot Reload)**: [http://localhost:5173](http://localhost:5173)
 - **Backend API/Admin**: [http://localhost:8000](http://localhost:8000)
+
+#### Creating an Admin Account
+To access the Django Admin panel, you need to create a superuser:
+```powershell
+.\venv\Scripts\Activate.ps1
+python manage.py createsuperuser
+```
+Follow the prompts to set your username, email, and password.
 
 ---
 

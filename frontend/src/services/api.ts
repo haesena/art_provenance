@@ -29,11 +29,26 @@ export interface Artwork {
   id: number;
   name: string;
   medium: string;
+  medium_id: number | null;
+  art_type: string;
+  art_type_id: number | null;
   dimension: string;
   creation_date: string;
   image: string | null;
   notes?: string;
   provenance?: ProvenanceEvent[];
+}
+
+export interface ArtType {
+  id: number;
+  name: string;
+}
+
+export interface Medium {
+  id: number;
+  name: string;
+  art_type_id: number | null;
+  art_type_name: string;
 }
 
 export interface ProvenanceEvent {
@@ -76,8 +91,8 @@ export interface User {
   is_staff: boolean;
 }
 
-export const getArtworks = async () => {
-  const response = await api.get<{ results: Artwork[] }>('/artworks/');
+export const getArtworks = async (params?: { medium?: number; art_type?: number }) => {
+  const response = await api.get<{ results: Artwork[] }>('/artworks/', { params });
   return response.data;
 };
 
@@ -88,6 +103,16 @@ export const getArtworkDetail = async (id: number) => {
 
 export const getPersons = async () => {
   const response = await api.get<{ results: Person[] }>('/persons/');
+  return response.data;
+};
+
+export const getArtTypes = async () => {
+  const response = await api.get<{ results: ArtType[] }>('/art-types/');
+  return response.data;
+};
+
+export const getMediums = async () => {
+  const response = await api.get<{ results: Medium[] }>('/mediums/');
   return response.data;
 };
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getArtworks, Artwork } from '../services/api';
-import { Search, Filter } from 'lucide-react';
+import { getArtworks, getArtTypes, getMediums, Artwork, ArtType, Medium } from '../services/api';
+import { Search, Filter, X } from 'lucide-react';
 
 import { getDeterministicColor } from '../utils/colorUtils';
 
@@ -9,12 +9,35 @@ const ArtworkList: React.FC = () => {
     const [artworks, setArtworks] = useState<Artwork[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [artTypes, setArtTypes] = useState<ArtType[]>([]);
+    const [mediums, setMediums] = useState<Medium[]>([]);
+    const [selectedArtType, setSelectedArtType] = useState<number | ''>('');
+    const [selectedMedium, setSelectedMedium] = useState<number | ''>('');
+    const [showFilters, setShowFilters] = useState(false);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const [typesData, mediumsData] = await Promise.all([getArtTypes(), getMediums()]);
+                setArtTypes(typesData.results || []);
+                setMediums(mediumsData.results || []);
+            } catch (error) {
+                console.error("Failed to fetch categories", error);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     useEffect(() => {
         const fetchArtworks = async () => {
+            setLoading(true);
             try {
-                const data = await getArtworks();
-                setArtworks(data.results || []); // Handle standard generic response wrapper if present, else data
+                const params: any = {};
+                if (selectedArtType) params.art_type = selectedArtType;
+                if (selectedMedium) params.medium = selectedMedium;
+
+                const data = await getArtworks(params);
+                setArtworks(data.results || []);
             } catch (error) {
                 console.error("Failed to fetch artworks", error);
             } finally {
@@ -22,11 +45,17 @@ const ArtworkList: React.FC = () => {
             }
         };
         fetchArtworks();
-    }, []);
+    }, [selectedArtType, selectedMedium]);
 
     const filteredArtworks = artworks.filter(art =>
         art.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const resetFilters = () => {
+        setSelectedArtType('');
+        setSelectedMedium('');
+        setSearchTerm('');
+    };
 
     return (
         <div className="space-y-6">
@@ -43,12 +72,63 @@ const ArtworkList: React.FC = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 text-sm w-full sm:w-auto">
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                    >
                         <Filter className="w-4 h-4" />
                         Filter
+                        {(selectedArtType || selectedMedium) && (
+                            <span className="flex items-center justify-center w-5 h-5 bg-indigo-600 text-white text-[10px] font-bold rounded-full">
+                                {(selectedArtType ? 1 : 0) + (selectedMedium ? 1 : 0)}
+                            </span>
+                        )}
                     </button>
                 </div>
             </div>
+
+            {showFilters && (
+                <div className="bg-white p-4 border border-gray-200 rounded-xl shadow-sm flex flex-wrap gap-4 items-end animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="space-y-1.5 flex-1 min-w-[200px]">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Art Type</label>
+                        <select
+                            value={selectedArtType}
+                            onChange={(e) => {
+                                setSelectedArtType(e.target.value ? Number(e.target.value) : '');
+                                setSelectedMedium(''); // Reset medium when art type changes to avoid invalid combinations
+                            }}
+                            className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="">All Art Types</option>
+                            {artTypes.map(type => (
+                                <option key={type.id} value={type.id}>{type.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="space-y-1.5 flex-1 min-w-[200px]">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Medium</label>
+                        <select
+                            value={selectedMedium}
+                            onChange={(e) => setSelectedMedium(e.target.value ? Number(e.target.value) : '')}
+                            className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="">All Mediums</option>
+                            {mediums
+                                .filter(m => !selectedArtType || m.art_type_id === selectedArtType)
+                                .map(medium => (
+                                    <option key={medium.id} value={medium.id}>{medium.name}</option>
+                                ))
+                            }
+                        </select>
+                    </div>
+                    <button
+                        onClick={resetFilters}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 hover:text-red-600 transition-colors"
+                    >
+                        <X className="w-4 h-4" /> Clear All
+                    </button>
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex justify-center items-center h-64">

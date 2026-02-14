@@ -26,7 +26,9 @@ urlpatterns = [
     path('api/artworks/', api.artwork_list),
     path('api/artworks/<int:pk>/', api.artwork_detail),
     path('api/persons/', api.person_list),
-    path('api/persons/<int:pk>/', api.person_detail),
+    path('api/persons/<int:pk>/', api.person_detail, name='person-detail'),
+    path('api/art-types/', api.art_type_list, name='art-type-list'),
+    path('api/mediums/', api.medium_list, name='medium-list'),
     
     # Auth API
     path('api/auth/csrf/', auth_api.get_csrf_token),

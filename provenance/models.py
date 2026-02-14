@@ -129,3 +129,40 @@ class ArtworkRelationship(models.Model):
 
     def __str__(self):
         return f"{self.source_artwork} -> {self.type} -> {self.target_artwork}"
+
+class Auction(models.Model):
+    name = models.CharField(max_length=255)
+    date = models.CharField(max_length=100, blank=True)
+    institution = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True, blank=True, related_name='auctions')
+    notes = models.TextField(blank=True)
+    sources = models.ManyToManyField(Source, blank=True, related_name='auctions')
+    images = GenericRelation(Image)
+
+    def __str__(self):
+        return self.name
+
+class AuctionPerson(models.Model):
+    ROLE_CHOICES = [
+        ('buyer', 'Buyer'),
+        ('seller', 'Seller'),
+        ('expert', 'Expert'),
+        ('auctioneer', 'Auctioneer'),
+    ]
+    auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name='auction_persons')
+    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='person_auctions')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+
+    def __str__(self):
+        return f"{self.person} as {self.get_role_display()} in {self.auction}"
+
+class Exhibition(models.Model):
+    name = models.CharField(max_length=255)
+    date_start = models.CharField(max_length=100, blank=True)
+    date_end = models.CharField(max_length=100, blank=True, null=True)
+    institution = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True, blank=True, related_name='exhibitions')
+    notes = models.TextField(blank=True)
+    sources = models.ManyToManyField(Source, blank=True, related_name='exhibitions')
+    images = GenericRelation(Image)
+
+    def __str__(self):
+        return self.name

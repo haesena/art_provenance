@@ -3,9 +3,9 @@ from django.db import models
 from django.forms import Textarea
 from django.contrib.contenttypes.admin import GenericTabularInline
 from .models import (
-    Person, Institution, InstitutionType, ArtType, Artwork, 
-    ArtworkGroup, Source, ProvenanceEvent, ArtworkRelationship, 
-    Image, Medium
+    Person, Institution, InstitutionType, ArtType, Artwork,
+    ArtworkGroup, Source, ProvenanceEvent, ArtworkRelationship,
+    Image, Medium, Auction, AuctionPerson, Exhibition
 )
 
 class ImageInline(GenericTabularInline):
@@ -33,6 +33,24 @@ class InstitutionAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     inlines = [ImageInline]
     fields = ('name', 'type', 'place', 'start_date', 'end_date', 'notes')
+
+class AuctionPersonInline(admin.TabularInline):
+    model = AuctionPerson
+    extra = 1
+
+@admin.register(Auction)
+class AuctionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'date', 'institution')
+    search_fields = ('name', 'notes')
+    inlines = [AuctionPersonInline, ImageInline]
+    filter_horizontal = ('sources',)
+
+@admin.register(Exhibition)
+class ExhibitionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'date_start', 'date_end', 'institution')
+    search_fields = ('name', 'notes')
+    inlines = [ImageInline]
+    filter_horizontal = ('sources',)
 
 @admin.register(ArtType)
 class ArtTypeAdmin(admin.ModelAdmin):

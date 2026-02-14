@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getArtworkDetail, Artwork, ProvenanceEvent } from '../services/api';
 import { ArrowLeft, FileText, Anchor, BookOpen } from 'lucide-react';
 

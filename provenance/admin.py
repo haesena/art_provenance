@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from django.forms import Textarea
 from django.contrib.contenttypes.admin import GenericTabularInline
 from .models import (
     Person, Institution, InstitutionType, ArtType, Artwork, 
@@ -51,6 +53,9 @@ class SourceAdmin(admin.ModelAdmin):
     list_display = ('source', 'type')
     search_fields = ('source',)
     inlines = [ImageInline]
+    formfield_overrides = {
+        models.CharField: {'widget': Textarea(attrs={'rows': 4, 'cols': 80})},
+    }
 
 @admin.register(ProvenanceEvent)
 class ProvenanceEventAdmin(admin.ModelAdmin):

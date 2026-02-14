@@ -31,3 +31,4 @@ Thumbs.db
 *.csv
 *.log
 data.json
+provenance_data.json

@@ -63,8 +63,8 @@ class Command(BaseCommand):
         for row in sheet.iter_rows(min_row=2, values_only=True):
             # Headers: ['Person', 'Family Name', 'First Name', 'DOB', 'DOD', 'Biography']
             if row[1]: # Family Name
-                dob = str(row[3]) if row[3] else None
-                dod = str(row[4]) if row[4] else None
+                dob = self._format_date(row[3])
+                dod = self._format_date(row[4])
                 Person.objects.get_or_create(
                     family_name=row[1],
                     first_name=row[2] or '',
@@ -87,8 +87,8 @@ class Command(BaseCommand):
                     defaults={
                         'type': inst_type,
                         'place': row[2] or '',
-                        'start_date': str(row[3]) if row[3] else None,
-                        'end_date': str(row[4]) if row[4] else None
+                        'start_date': self._format_date(row[3]),
+                        'end_date': self._format_date(row[4])
                     }
                 )
 
@@ -147,7 +147,7 @@ class Command(BaseCommand):
                 artwork=artwork,
                 event_type=row[2] or 'Unknown',
                 sequence_number=row[3] if row[3] is not None else 0,
-                date=str(row[4]) if row[4] else '',
+                date=self._format_date(row[4]) or '',
                 person=person,
                 institution=institution,
                 certainty=row[7] if row[7] in dict(ProvenanceEvent.CERTAINTY_CHOICES) else None,
@@ -173,3 +173,28 @@ class Command(BaseCommand):
                         target_artwork=target_artwork,
                         type='possible_match'
                     )
+
+    def _format_date(self, value):
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.strftime('%d.%m.%Y')
+        val_str = str(value).strip()
+        if not val_str:
+            return None
+            
+        # Try YYYY-MM-DD HH:MM:SS
+        try:
+            dt = datetime.strptime(val_str, '%Y-%m-%d %H:%M:%S')
+            return dt.strftime('%d.%m.%Y')
+        except ValueError:
+            pass
+            
+        # Try YYYY-MM-DD
+        try:
+            dt = datetime.strptime(val_str, '%Y-%m-%d')
+            return dt.strftime('%d.%m.%Y')
+        except ValueError:
+            pass
+            
+        return val_str

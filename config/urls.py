@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/artworks/<int:pk>/', api.artwork_detail),
     path('api/persons/', api.person_list),
     path('api/persons/<int:pk>/', api.person_detail, name='person-detail'),
+    path('api/event-types/', api.event_type_list, name='event-type-list'),
     path('api/art-types/', api.art_type_list, name='art-type-list'),
     path('api/mediums/', api.medium_list, name='medium-list'),
     

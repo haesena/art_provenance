@@ -1,17 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getPersons, Person } from '../services/api';
-import { Search, User } from 'lucide-react';
+import { getPersons, getEventTypes, Person, EventType } from '../services/api';
+import { Search, User as UserIcon, Filter, X } from 'lucide-react';
 
 const PersonList: React.FC = () => {
     const [persons, setPersons] = useState<Person[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [eventTypes, setEventTypes] = useState<EventType[]>([]);
+    const [selectedEventType, setSelectedEventType] = useState<string>('');
+    const [showFilters, setShowFilters] = useState(false);
+
+    useEffect(() => {
+        const fetchEventTypes = async () => {
+            try {
+                const data = await getEventTypes();
+                setEventTypes(data.results || []);
+            } catch (error) {
+                console.error("Failed to fetch event types", error);
+            }
+        };
+        fetchEventTypes();
+    }, []);
 
     useEffect(() => {
         const fetchPersons = async () => {
+            setLoading(true);
             try {
-                const data = await getPersons();
+                const params: any = {};
+                if (selectedEventType) params.event_type = selectedEventType;
+
+                const data = await getPersons(params);
                 setPersons(data.results || []);
             } catch (error) {
                 console.error("Failed to fetch persons", error);
@@ -20,28 +39,69 @@ const PersonList: React.FC = () => {
             }
         };
         fetchPersons();
-    }, []);
+    }, [selectedEventType]);
 
     const filteredPersons = persons.filter(person => {
         const fullSearch = `${person.first_name} ${person.family_name}`.toLowerCase();
         return fullSearch.includes(searchTerm.toLowerCase());
     });
 
+    const resetFilters = () => {
+        setSearchTerm('');
+        setSelectedEventType('');
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-2xl font-semibold text-gray-800">Persons Exploration</h2>
-                <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                        type="text"
-                        placeholder="Search by name..."
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none w-full text-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                            type="text"
+                            placeholder="Search by name..."
+                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none w-full text-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                    >
+                        <Filter className="w-4 h-4" />
+                        Filter
+                        {selectedEventType && (
+                            <span className="flex items-center justify-center w-5 h-5 bg-indigo-600 text-white text-[10px] font-bold rounded-full">1</span>
+                        )}
+                    </button>
                 </div>
             </div>
+
+            {showFilters && (
+                <div className="bg-white p-4 border border-gray-200 rounded-xl shadow-sm flex flex-wrap gap-4 items-end animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="space-y-1.5 flex-1 min-w-[200px]">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Provenance Event Type</label>
+                        <select
+                            value={selectedEventType}
+                            onChange={(e) => setSelectedEventType(e.target.value)}
+                            className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="">All Event Types</option>
+                            {eventTypes.map(type => (
+                                <option key={type.id} value={type.id}>{type.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <button
+                        onClick={resetFilters}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 hover:text-red-600 transition-colors"
+                    >
+                        <X className="w-4 h-4" /> Clear All
+                    </button>
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex justify-center items-center h-64">
@@ -53,7 +113,7 @@ const PersonList: React.FC = () => {
                         <Link key={person.id} to={`/persons/${person.id}`} className="group">
                             <div className="bg-white p-4 border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 group-hover:bg-indigo-100 transition-colors">
-                                    <User className="w-6 h-6 text-indigo-600" />
+                                    <UserIcon className="w-6 h-6 text-indigo-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-medium text-gray-900 truncate group-hover:text-indigo-600">

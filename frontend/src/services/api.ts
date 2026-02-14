@@ -72,6 +72,11 @@ export interface Person {
   death_date: string | null;
 }
 
+export interface EventType {
+  id: string;
+  name: string;
+}
+
 export interface PersonDetail extends Person {
   biography: string;
   events: {
@@ -101,8 +106,13 @@ export const getArtworkDetail = async (id: number) => {
   return response.data;
 };
 
-export const getPersons = async () => {
-  const response = await api.get<{ results: Person[] }>('/persons/');
+export const getPersons = async (params?: { event_type?: string }) => {
+  const response = await api.get<{ results: Person[] }>('/persons/', { params });
+  return response.data;
+};
+
+export const getEventTypes = async () => {
+  const response = await api.get<{ results: EventType[] }>('/event-types/');
   return response.data;
 };
 

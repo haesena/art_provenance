@@ -87,6 +87,11 @@ def artwork_detail(request, pk):
 
 def person_list(request):
     persons = Person.objects.all().order_by('family_name', 'first_name')
+    
+    event_type = request.GET.get('event_type')
+    if event_type:
+        persons = persons.filter(provenance_events__event_type=event_type).distinct()
+
     data = []
     for person in persons:
         data.append({
@@ -96,6 +101,12 @@ def person_list(request):
             'birth_date': person.birth_date,
             'death_date': person.death_date,
         })
+    return JsonResponse({'results': data})
+
+def event_type_list(request):
+    # Get unique event types from ProvenanceEvent model
+    types = ProvenanceEvent.objects.order_by('event_type').values_list('event_type', flat=True).distinct()
+    data = [{'id': t, 'name': t} for t in types if t]
     return JsonResponse({'results': data})
 
 def person_detail(request, pk):

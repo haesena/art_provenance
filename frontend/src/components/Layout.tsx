@@ -18,6 +18,7 @@ const Layout: React.FC = () => {
 
     const navLinks = [
         { to: '/', icon: Database, label: 'Artworks', active: location.pathname === '/' || location.pathname.startsWith('/artworks') },
+        { to: '/persons', icon: UserIcon, label: 'Persons', active: location.pathname.startsWith('/persons') },
         { to: '/analysis', icon: BarChart2, label: 'Analysis', active: location.pathname === '/analysis' },
     ];
 

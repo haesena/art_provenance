@@ -25,6 +25,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/artworks/', api.artwork_list),
     path('api/artworks/<int:pk>/', api.artwork_detail),
+    path('api/persons/', api.person_list),
+    path('api/persons/<int:pk>/', api.person_detail),
     
     # Auth API
     path('api/auth/csrf/', auth_api.get_csrf_token),

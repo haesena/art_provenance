@@ -37,12 +37,12 @@ const ArtworkDetail: React.FC = () => {
                 <div className="md:col-span-1">
                     <div className="aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden shadow-md">
                         {artwork.image ? (
-                            <img src={artwork.image} alt={artwork.title} className="w-full h-full object-cover" />
+                            <img src={artwork.image} alt={artwork.name} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full relative">
                                 <div
                                     className="absolute inset-0 z-10 opacity-30 mix-blend-multiply"
-                                    style={{ backgroundColor: getDeterministicColor(artwork.title) }}
+                                    style={{ backgroundColor: getDeterministicColor(artwork.name) }}
                                 />
                                 <img src="/assets/placeholder-artwork.png" alt="No image available" className="w-full h-full object-cover" />
                             </div>
@@ -53,7 +53,7 @@ const ArtworkDetail: React.FC = () => {
                 {/* Metadata */}
                 <div className="md:col-span-2 space-y-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">{artwork.title}</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">{artwork.name}</h1>
                         <p className="text-xl text-gray-600 mt-2">{artwork.creation_date}</p>
                     </div>
 
@@ -64,9 +64,8 @@ const ArtworkDetail: React.FC = () => {
                         </div>
                         <div>
                             <span className="block text-gray-500 font-medium">Dimensions</span>
-                            <span className="text-gray-900">{artwork.dimensions || 'Unknown'}</span>
+                            <span className="text-gray-900">{artwork.dimension || 'Unknown'}</span>
                         </div>
-                        {/* Add Artist here if available in API */}
                     </div>
 
                     {artwork.notes && (
@@ -103,14 +102,17 @@ const ArtworkDetail: React.FC = () => {
                                 </div>
 
                                 <div className="text-sm text-gray-600">
-                                    {event.role && <span className="inline-block px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600 mr-2 mb-2">{event.role}</span>}
-                                    {event.certainty && <span className={`inline-block px-2 py-0.5 rounded text-xs mr-2 mb-2 ${event.certainty === 'proven' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{event.certainty}</span>}
+                                    {event.certainty && <span className={`inline-block px-2 py-0.5 rounded text-xs mr-2 mb-2 ${event.certainty === 'Proven' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{event.certainty}</span>}
                                 </div>
 
-                                {event.source && (
-                                    <div className="mt-2 text-xs text-gray-500 flex items-start gap-1.5 bg-gray-50 p-2 rounded">
-                                        <BookOpen className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                                        <span>{event.source}</span>
+                                {event.sources && event.sources.length > 0 && (
+                                    <div className="mt-2 space-y-1">
+                                        {event.sources.map((src, idx) => (
+                                            <div key={idx} className="text-xs text-gray-500 flex items-start gap-1.5 bg-gray-50 p-2 rounded">
+                                                <BookOpen className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                                <span>{src}</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
 

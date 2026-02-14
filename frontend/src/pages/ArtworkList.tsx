@@ -25,7 +25,7 @@ const ArtworkList: React.FC = () => {
     }, []);
 
     const filteredArtworks = artworks.filter(art =>
-        art.title.toLowerCase().includes(searchTerm.toLowerCase())
+        art.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -37,7 +37,7 @@ const ArtworkList: React.FC = () => {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
                             type="text"
-                            placeholder="Search by title..."
+                            placeholder="Search by name..."
                             className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none w-full text-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -63,14 +63,14 @@ const ArtworkList: React.FC = () => {
                                     {art.image ? (
                                         <img
                                             src={art.image}
-                                            alt={art.title}
+                                            alt={art.name}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                         />
                                     ) : (
                                         <div className="w-full h-full relative">
                                             <div
                                                 className="absolute inset-0 z-10 opacity-30 mix-blend-multiply"
-                                                style={{ backgroundColor: getDeterministicColor(art.title) }}
+                                                style={{ backgroundColor: getDeterministicColor(art.name) }}
                                             />
                                             <img
                                                 src="/assets/placeholder-artwork.png"
@@ -81,7 +81,7 @@ const ArtworkList: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="p-4">
-                                    <h3 className="font-medium text-gray-900 group-hover:text-indigo-600 truncate">{art.title}</h3>
+                                    <h3 className="font-medium text-gray-900 group-hover:text-indigo-600 truncate">{art.name}</h3>
                                     <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
                                         <span>{art.creation_date || 'Unknown Date'}</span>
                                         <span>{art.medium}</span>
@@ -91,7 +91,8 @@ const ArtworkList: React.FC = () => {
                         </Link>
                     ))}
                 </div>
-            )}
+            )
+            }
         </div>
     );
 };

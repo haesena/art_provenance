@@ -27,9 +27,9 @@ api.interceptors.request.use(config => {
 
 export interface Artwork {
   id: number;
-  title: string;
+  name: string;
   medium: string;
-  dimensions: string;
+  dimension: string;
   creation_date: string;
   image: string | null;
   notes?: string;
@@ -41,11 +41,32 @@ export interface ProvenanceEvent {
   sequence: number;
   type: string;
   date: string | null;
+  person: string;
+  institution: string;
   actor: string;
-  role: string | null;
   certainty: string;
-  source: string | null;
+  sources: string[];
   notes: string;
+}
+
+export interface Person {
+  id: number;
+  family_name: string;
+  first_name: string;
+  birth_date: string | null;
+  death_date: string | null;
+}
+
+export interface PersonDetail extends Person {
+  biography: string;
+  events: {
+    id: number;
+    artwork_id: number;
+    artwork_name: string;
+    event_type: string;
+    date: string;
+    notes: string;
+  }[];
 }
 
 export interface User {
@@ -62,6 +83,16 @@ export const getArtworks = async () => {
 
 export const getArtworkDetail = async (id: number) => {
   const response = await api.get<Artwork>(`/artworks/${id}/`);
+  return response.data;
+};
+
+export const getPersons = async () => {
+  const response = await api.get<{ results: Person[] }>('/persons/');
+  return response.data;
+};
+
+export const getPersonDetail = async (id: number) => {
+  const response = await api.get<PersonDetail>(`/persons/${id}/`);
   return response.data;
 };
 

@@ -14,108 +14,77 @@ class Image(models.Model):
     def __str__(self):
         return self.caption or f"Image {self.id}"
 
-class Person(models.Model):
-    name = models.CharField(max_length=255)
-    birth_date = models.DateField(null=True, blank=True)
-    death_date = models.DateField(null=True, blank=True)
-    nationality = models.CharField(max_length=100, blank=True)
-    biography = models.TextField(blank=True)
-    
-    images = GenericRelation(Image)
+class ArtType(models.Model):
+    name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
         return self.name
 
-class Organization(models.Model):
-    ORG_TYPES = [
-        ('auction_house', 'Auction House'),
-        ('dealership', 'Dealership'),
-        ('museum', 'Museum'),
-        ('gallery', 'Gallery'),
-        ('other', 'Other'),
-    ]
-    name = models.CharField(max_length=255)
-    type = models.CharField(max_length=50, choices=ORG_TYPES)
-    location = models.CharField(max_length=255, blank=True)
-
-    def __str__(self):
-        return f"{self.name} ({self.get_type_display()})"
-
 class ArtworkGroup(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
 
 class Medium(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
+    type = models.ForeignKey(ArtType, on_delete=models.SET_NULL, null=True, blank=True, related_name='mediums')
     description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
 
+class Person(models.Model):
+    family_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255, blank=True)
+    birth_date = models.CharField(max_length=100, blank=True, null=True) # Changed to CharField to handle Excel dates
+    death_date = models.CharField(max_length=100, blank=True, null=True)
+    biography = models.TextField(blank=True)
+    
+    images = GenericRelation(Image)
+
+    def __str__(self):
+        return f"{self.family_name}, {self.first_name}".strip(", ")
+
+class InstitutionType(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+class Institution(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    type = models.ForeignKey(InstitutionType, on_delete=models.SET_NULL, null=True, blank=True, related_name='institutions')
+    place = models.CharField(max_length=255, blank=True)
+    start_date = models.CharField(max_length=100, blank=True, null=True)
+    end_date = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
 class Artwork(models.Model):
-    title = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    dimension = models.CharField(max_length=255, blank=True)
     medium = models.ForeignKey(Medium, on_delete=models.SET_NULL, null=True, blank=True, related_name='artworks')
-    dimensions = models.CharField(max_length=100, blank=True)
-    creation_date_text = models.CharField(max_length=100, blank=True, help_text="e.g. 'c. 1750'")
-    year_start = models.IntegerField(null=True, blank=True)
-    year_end = models.IntegerField(null=True, blank=True)
-    notes = models.TextField(blank=True, help_text="General notes or content remarks.")
+    notes = models.TextField(blank=True)
     
     groups = models.ManyToManyField(ArtworkGroup, blank=True, related_name='artworks')
     images = GenericRelation(Image)
 
     def __str__(self):
-        return self.title
+        return self.name
 
 class Source(models.Model):
-    SOURCE_TYPES = [
-        ('archive', 'Archive Document (Archivalie)'),
-        ('literature', 'Literature (Literatur)'),
-        ('other', 'Other'),
-    ]
-    citation = models.CharField(max_length=500, help_text="e.g. 'Sotheby's Catalog, 1923'")
-    type = models.CharField(max_length=50, choices=SOURCE_TYPES, default='other')
-    details = models.TextField(blank=True, help_text="Specific pages, digital locations, etc.")
-    notes = models.TextField(blank=True, help_text="Remarks about the archival document.")
+    source = models.CharField(max_length=500)
+    type = models.CharField(max_length=255, blank=True)
+    link = models.URLField(max_length=500, blank=True, null=True)
     images = GenericRelation(Image)
 
     def __str__(self):
-        return self.citation[:50]
-
-class Auction(models.Model):
-    name = models.CharField(max_length=255)
-    auction_house = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='auctions')
-    date = models.DateField(null=True, blank=True)
-    source = models.ForeignKey(Source, on_delete=models.SET_NULL, null=True, blank=True, help_text="Link to the auction catalog.")
-
-    def __str__(self):
-        return f"{self.name} ({self.date})"
-
-class Exhibition(models.Model):
-    title = models.CharField(max_length=255)
-    location = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='exhibitions')
-    date_start = models.DateField(null=True, blank=True)
-    date_end = models.DateField(null=True, blank=True)
-    source = models.ForeignKey(Source, on_delete=models.SET_NULL, null=True, blank=True, help_text="Link to the exhibition catalog.")
-
-    def __str__(self):
-        return f"{self.title} ({self.date_start})"
+        return self.source[:50]
 
 class ProvenanceEvent(models.Model):
-    EVENT_TYPES = [
-        ('creation', 'Creation'),
-        ('acquisition', 'Acquisition'),
-        ('sale', 'Sale'),
-        ('transfer', 'Transfer'),
-        ('mentioned', 'Mentioned'),
-        ('lost', 'Lost'),
-        ('found', 'Found'),
-        ('loan', 'Loan'),
-        ('exhibition', 'Exhibited'),
-    ]
     CERTAINTY_CHOICES = [
         ('proven', 'Proven'),
         ('likely', 'Likely'),
@@ -124,59 +93,38 @@ class ProvenanceEvent(models.Model):
         ('false', 'False / Disproven'),
     ]
 
-    artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE, related_name='provenance')
-    sequence_number = models.IntegerField(help_text="Order of events. Higher number = later.")
+    artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE, related_name='provenance_events')
+    event_type = models.CharField(max_length=100)
+    sequence_number = models.IntegerField(help_text="Order of events.")
+    date = models.CharField(max_length=100, blank=True, help_text="Date as input type text")
     
-    event_type = models.CharField(max_length=50, choices=EVENT_TYPES, default='acquisition')
+    person = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
+    institution = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
     
-    # Actor (Person or Organization)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    actor = GenericForeignKey('content_type', 'object_id')
-    
-    role = models.CharField(max_length=100, blank=True, help_text="e.g. Owner, Seller, Agent")
-    
-    date_start = models.DateField(null=True, blank=True)
-    date_end = models.DateField(null=True, blank=True)
-    display_date = models.CharField(max_length=100, blank=True, help_text="e.g. 'Early 20th Century'")
-    
-    certainty = models.CharField(max_length=20, choices=CERTAINTY_CHOICES, default='proven')
-    source = models.ForeignKey(Source, on_delete=models.SET_NULL, null=True, blank=True)
-    
-    # Context
-    auction = models.ForeignKey(Auction, on_delete=models.SET_NULL, null=True, blank=True, related_name='events')
-    exhibition = models.ForeignKey(Exhibition, on_delete=models.SET_NULL, null=True, blank=True, related_name='events')
-
-    price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    currency = models.CharField(max_length=10, blank=True)
+    certainty = models.CharField(max_length=20, choices=CERTAINTY_CHOICES, blank=True, null=True)
     notes = models.TextField(blank=True)
+    
+    sources = models.ManyToManyField(Source, blank=True, related_name='provenance_events')
 
     class Meta:
         ordering = ['sequence_number']
 
     def __str__(self):
-        return f"{self.sequence_number}. {self.get_event_type_display()} - {self.artwork}"
+        return f"{self.sequence_number}. {self.event_type} - {self.artwork}"
 
 class ArtworkRelationship(models.Model):
     RELATION_TYPES = [
-        ('possible_match', 'Possible Match (Is this the same?)'),
+        ('possible_match', 'Possible Match'),
         ('copy_of', 'Copy Of'),
         ('pendant_to', 'Pendant To'),
         ('study_for', 'Study For'),
-    ]
-    CERTAINTY_CHOICES = [
-        ('possible', 'Possible'),
-        ('probable', 'Probable'),
-        ('confirmed', 'Confirmed'),
-        ('rejected', 'Rejected'),
     ]
 
     source_artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE, related_name='relationships_from')
     target_artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE, related_name='relationships_to')
     
     type = models.CharField(max_length=50, choices=RELATION_TYPES, default='possible_match')
-    certainty = models.CharField(max_length=20, choices=CERTAINTY_CHOICES, default='possible')
     reasoning = models.TextField(blank=True)
 
     def __str__(self):
-        return f"{self.source_artwork} -> {self.get_type_display()} -> {self.target_artwork}"
+        return f"{self.source_artwork} -> {self.type} -> {self.target_artwork}"

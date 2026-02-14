@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getArtworkDetail, Artwork, ProvenanceEvent } from '../services/api';
 import { ArrowLeft, FileText, Anchor, BookOpen } from 'lucide-react';
 
@@ -7,6 +7,7 @@ import { getDeterministicColor } from '../utils/colorUtils';
 
 const ArtworkDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const [artwork, setArtwork] = useState<Artwork | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -22,14 +23,17 @@ const ArtworkDetail: React.FC = () => {
         }
     }, [id]);
 
-    if (loading) return <div className="p-8 text-center">Loading...</div>;
+    if (loading) return <div className="p-8 text-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div></div>;
     if (!artwork) return <div className="p-8 text-center">Artwork not found</div>;
 
     return (
         <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 pb-12">
-            <Link to="/" className="inline-flex items-center text-sm text-gray-500 hover:text-indigo-600 mb-2 md:mb-4 transition-colors">
+            <button
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center text-sm text-gray-500 hover:text-indigo-600 mb-2 md:mb-4 transition-colors"
+            >
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Collection
-            </Link>
+            </button>
 
             {/* Header Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

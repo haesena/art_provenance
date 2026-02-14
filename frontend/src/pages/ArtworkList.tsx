@@ -1,19 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getArtworks, getArtTypes, getMediums, Artwork, ArtType, Medium } from '../services/api';
 import { Search, Filter, X } from 'lucide-react';
 
 import { getDeterministicColor } from '../utils/colorUtils';
 
 const ArtworkList: React.FC = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [artworks, setArtworks] = useState<Artwork[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
+
+    // Initialize state from search parameters
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
+    const [selectedArtType, setSelectedArtType] = useState<number | ''>(
+        searchParams.get('art_type') ? Number(searchParams.get('art_type')) : ''
+    );
+    const [selectedMedium, setSelectedMedium] = useState<number | ''>(
+        searchParams.get('medium') ? Number(searchParams.get('medium')) : ''
+    );
+
     const [loading, setLoading] = useState(true);
     const [artTypes, setArtTypes] = useState<ArtType[]>([]);
     const [mediums, setMediums] = useState<Medium[]>([]);
-    const [selectedArtType, setSelectedArtType] = useState<number | ''>('');
-    const [selectedMedium, setSelectedMedium] = useState<number | ''>('');
-    const [showFilters, setShowFilters] = useState(false);
+    const [showFilters, setShowFilters] = useState(selectedArtType !== '' || selectedMedium !== '');
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -35,6 +43,9 @@ const ArtworkList: React.FC = () => {
                 const params: any = {};
                 if (selectedArtType) params.art_type = selectedArtType;
                 if (selectedMedium) params.medium = selectedMedium;
+                // Note: The backend artwork_list currently doesn't handle 'q' for searching, 
+                // but it's good practice to pass it if we want server-side search later.
+                // For now, we still do local search on the results.
 
                 const data = await getArtworks(params);
                 setArtworks(data.results || []);
@@ -45,7 +56,14 @@ const ArtworkList: React.FC = () => {
             }
         };
         fetchArtworks();
-    }, [selectedArtType, selectedMedium]);
+
+        // Update URL params
+        const newParams: any = {};
+        if (searchTerm) newParams.q = searchTerm;
+        if (selectedArtType) newParams.art_type = selectedArtType.toString();
+        if (selectedMedium) newParams.medium = selectedMedium.toString();
+        setSearchParams(newParams, { replace: true });
+    }, [selectedArtType, selectedMedium, searchTerm, setSearchParams]);
 
     const filteredArtworks = artworks.filter(art =>
         art.name.toLowerCase().includes(searchTerm.toLowerCase())

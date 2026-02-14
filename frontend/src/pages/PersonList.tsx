@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getPersons, getEventTypes, Person, EventType } from '../services/api';
 import { Search, User as UserIcon, Filter, X } from 'lucide-react';
 
 const PersonList: React.FC = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [persons, setPersons] = useState<Person[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
+
+    // Initialize state from search parameters
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
+    const [selectedEventType, setSelectedEventType] = useState<string>(searchParams.get('event_type') || '');
+
     const [loading, setLoading] = useState(true);
     const [eventTypes, setEventTypes] = useState<EventType[]>([]);
-    const [selectedEventType, setSelectedEventType] = useState<string>('');
-    const [showFilters, setShowFilters] = useState(false);
+    const [showFilters, setShowFilters] = useState(selectedEventType !== '');
 
     useEffect(() => {
         const fetchEventTypes = async () => {
@@ -39,7 +43,13 @@ const PersonList: React.FC = () => {
             }
         };
         fetchPersons();
-    }, [selectedEventType]);
+
+        // Update URL params
+        const newParams: any = {};
+        if (searchTerm) newParams.q = searchTerm;
+        if (selectedEventType) newParams.event_type = selectedEventType;
+        setSearchParams(newParams, { replace: true });
+    }, [selectedEventType, searchTerm, setSearchParams]);
 
     const filteredPersons = persons.filter(person => {
         const fullSearch = `${person.first_name} ${person.family_name}`.toLowerCase();

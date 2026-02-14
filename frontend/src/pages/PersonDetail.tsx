@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getPersonDetail, PersonDetail } from '../services/api';
 import { ArrowLeft, User, History, ExternalLink } from 'lucide-react';
 
 const PersonDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const [person, setPerson] = useState<PersonDetail | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -27,9 +28,12 @@ const PersonDetailPage: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 pb-12">
-            <Link to="/persons" className="inline-flex items-center text-sm text-gray-500 hover:text-indigo-600 transition-colors">
+            <button
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+            >
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Persons
-            </Link>
+            </button>
 
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-6 md:p-8 flex flex-col md:flex-row gap-8 items-start">

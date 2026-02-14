@@ -59,6 +59,7 @@ class Institution(models.Model):
     place = models.CharField(max_length=255, blank=True)
     start_date = models.CharField(max_length=100, blank=True, null=True)
     end_date = models.CharField(max_length=100, blank=True, null=True)
+    notes = models.TextField(blank=True)
 
     def __str__(self):
         return self.name

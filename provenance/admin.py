@@ -31,6 +31,8 @@ class InstitutionAdmin(admin.ModelAdmin):
     list_display = ('name', 'type', 'place')
     list_filter = ('type',)
     search_fields = ('name',)
+    inlines = [ImageInline]
+    fields = ('name', 'type', 'place', 'start_date', 'end_date', 'notes')
 
 @admin.register(ArtType)
 class ArtTypeAdmin(admin.ModelAdmin):

@@ -89,7 +89,7 @@ class Source(models.Model):
     images = GenericRelation(Image)
 
     def __str__(self):
-        return self.source[:50]
+        return self.source[:200]
 
 class ProvenanceEvent(models.Model):
     CERTAINTY_CHOICES = [

@@ -20,6 +20,12 @@ class ArtType(models.Model):
     def __str__(self):
         return self.name
 
+class EventType(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
 class ArtworkGroup(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
@@ -95,7 +101,7 @@ class ProvenanceEvent(models.Model):
     ]
 
     artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE, related_name='provenance_events')
-    event_type = models.CharField(max_length=100)
+    event_type = models.ForeignKey(EventType, on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
     sequence_number = models.IntegerField(help_text="Order of events.")
     date = models.CharField(max_length=100, blank=True, help_text="Date as input type text")
     

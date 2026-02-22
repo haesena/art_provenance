@@ -5,7 +5,7 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from .models import (
     Person, Institution, InstitutionType, ArtType, Artwork,
     ArtworkGroup, Source, ProvenanceEvent, ArtworkRelationship,
-    Image, Medium, Auction, AuctionPerson, Exhibition
+    Image, Medium, Auction, AuctionPerson, Exhibition, EventType
 )
 
 class ImageInline(GenericTabularInline):
@@ -24,6 +24,10 @@ class PersonAdmin(admin.ModelAdmin):
 
 @admin.register(InstitutionType)
 class InstitutionTypeAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(EventType)
+class EventTypeAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(Institution)

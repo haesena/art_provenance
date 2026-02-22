@@ -73,7 +73,7 @@ export interface Person {
 }
 
 export interface EventType {
-  id: string;
+  id: number;
   name: string;
 }
 

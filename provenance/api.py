@@ -63,7 +63,7 @@ def artwork_detail(request, pk):
         events.append({
             'id': event.id,
             'sequence': event.sequence_number,
-            'type': event.event_type,
+            'type': event.event_type.name if event.event_type else '',
             'date': event.date,
             'person': person_name,
             'institution': institution_name,
@@ -90,7 +90,7 @@ def person_list(request):
     
     event_type = request.GET.get('event_type')
     if event_type:
-        persons = persons.filter(provenance_events__event_type=event_type).distinct()
+        persons = persons.filter(provenance_events__event_type_id=event_type).distinct()
 
     data = []
     for person in persons:
@@ -104,9 +104,10 @@ def person_list(request):
     return JsonResponse({'results': data})
 
 def event_type_list(request):
-    # Get unique event types from ProvenanceEvent model
-    types = ProvenanceEvent.objects.order_by('event_type').values_list('event_type', flat=True).distinct()
-    data = [{'id': t, 'name': t} for t in types if t]
+    # Get unique event types from EventType model
+    from .models import EventType
+    types = EventType.objects.all().order_by('name')
+    data = [{'id': t.id, 'name': t.name} for t in types]
     return JsonResponse({'results': data})
 
 def person_detail(request, pk):
@@ -118,7 +119,7 @@ def person_detail(request, pk):
             'id': event.id,
             'artwork_id': event.artwork.id,
             'artwork_name': event.artwork.name,
-            'event_type': event.event_type,
+            'event_type': event.event_type_new.name if event.event_type_new else event.event_type,
             'date': event.date,
             'notes': event.notes,
         })

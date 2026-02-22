@@ -86,7 +86,7 @@ class ProvenanceEventAdmin(admin.ModelAdmin):
     list_display = ('artwork', 'sequence_number', 'event_type', 'date', 'person', 'institution')
     list_filter = ('event_type', 'certainty')
     ordering = ('artwork', 'sequence_number')
-    search_fields = ('artwork__name', 'notes')
+    search_fields = ('artwork__name', 'person__family_name', 'person__first_name', 'institution__name', 'notes')
     filter_horizontal = ('sources',)
 
 @admin.register(ArtworkGroup)

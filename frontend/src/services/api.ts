@@ -53,12 +53,20 @@ export interface Medium {
 
 export interface ProvenanceEvent {
   id: number;
+  artwork_id: number;
+  artwork_name: string;
   sequence: number;
   type: string;
   date: string | null;
   person: string;
   institution: string;
   actor: string;
+  auction?: string;
+  auction_id?: number;
+  auction_institution?: string;
+  exhibition?: string;
+  exhibition_id?: number;
+  exhibition_institution?: string;
   certainty: string;
   sources: string[];
   notes: string;
@@ -79,14 +87,10 @@ export interface EventType {
 
 export interface PersonDetail extends Person {
   biography: string;
-  events: {
-    id: number;
+  events: (ProvenanceEvent & {
     artwork_id: number;
     artwork_name: string;
-    event_type: string;
-    date: string;
-    notes: string;
-  }[];
+  })[];
 }
 
 export interface User {

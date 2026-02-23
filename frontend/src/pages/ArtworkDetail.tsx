@@ -96,13 +96,41 @@ const ArtworkDetail: React.FC = () => {
                                 {/* Dot */}
                                 <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-indigo-50 border-2 border-indigo-500"></div>
 
-                                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between mb-1">
-                                    <h3 className="text-md font-bold text-gray-900">
-                                        {event.type} <span className="text-gray-500 font-normal">by</span> {event.actor}
+                                <div className="space-y-1">
+                                    {/* Line 1: Artwork Name */}
+                                    <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                                        {event.artwork_name}
                                     </h3>
-                                    <span className="text-sm text-gray-500 font-mono">
-                                        {event.date || 'Unknown Date'}
-                                    </span>
+
+                                    {/* Line 2: Event Type and Actor (Person) */}
+                                    <div className="flex flex-col sm:flex-row sm:items-baseline justify-between">
+                                        <div className="text-[15px] text-gray-700">
+                                            <span className="font-semibold text-indigo-700">{event.type}</span>
+                                            {event.person && (
+                                                <> <span className="text-gray-400 font-normal italic">by</span> <span className="font-medium">{event.person}</span></>
+                                            )}
+                                        </div>
+                                        <span className="text-sm text-gray-400 font-mono">
+                                            {event.date || 'Unknown Date'}
+                                        </span>
+                                    </div>
+
+                                    {/* Line 3: Institution/Auction/Exhibition Place */}
+                                    <div className="min-h-[1.25rem]">
+                                        {event.institution && (
+                                            <p className="text-sm text-gray-500 italic">{event.institution}</p>
+                                        )}
+                                        {event.auction && (
+                                            <p className="text-sm text-gray-500 italic">
+                                                Auction: {event.auction} {event.auction_institution && ` at ${event.auction_institution}`}
+                                            </p>
+                                        )}
+                                        {event.exhibition && (
+                                            <p className="text-sm text-gray-500 italic">
+                                                Exhibition: {event.exhibition} {event.exhibition_institution && ` at ${event.exhibition_institution}`}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="text-sm text-gray-600">

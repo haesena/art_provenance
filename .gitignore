@@ -32,3 +32,4 @@ Thumbs.db
 *.log
 data.json
 provenance_data.json
+/.idea/*

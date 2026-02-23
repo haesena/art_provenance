@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
@@ -107,11 +108,21 @@ class ProvenanceEvent(models.Model):
     
     person = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
     institution = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
+    auction = models.ForeignKey('Auction', on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
+    exhibition = models.ForeignKey('Exhibition', on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
     
     certainty = models.CharField(max_length=20, choices=CERTAINTY_CHOICES, blank=True, null=True)
     notes = models.TextField(blank=True)
     
     sources = models.ManyToManyField(Source, blank=True, related_name='provenance_events')
+
+    def clean(self):
+        super().clean()
+        actors = [self.institution, self.auction, self.exhibition]
+        active_actors = [a for a in actors if a is not None]
+        
+        if len(active_actors) > 1:
+            raise ValidationError("Only one of Institution, Auction, or Exhibition can be set.")
 
     class Meta:
         ordering = ['sequence_number']

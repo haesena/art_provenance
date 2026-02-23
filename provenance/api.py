@@ -48,30 +48,51 @@ def medium_list(request):
 def artwork_detail(request, pk):
     art = get_object_or_404(Artwork, pk=pk)
     
-    # Provenance
-    events = []
-    for event in art.provenance_events.all().order_by('sequence_number'):
-        person_name = str(event.person) if event.person else ""
-        institution_name = str(event.institution) if event.institution else ""
-        
-        actor_name = ""
-        if person_name and institution_name:
+def format_provenance_event(event):
+    person_name = str(event.person) if event.person else ""
+    institution_name = str(event.institution) if event.institution else ""
+    
+    actor_name = ""
+    if person_name:
+        if institution_name:
             actor_name = f"{person_name} ({institution_name})"
         else:
-            actor_name = person_name or institution_name or "Unknown"
+            actor_name = person_name
+    elif institution_name:
+        actor_name = institution_name
+    elif event.auction:
+        actor_name = str(event.auction)
+    elif event.exhibition:
+        actor_name = str(event.exhibition)
+    else:
+        actor_name = "Unknown"
 
-        events.append({
-            'id': event.id,
-            'sequence': event.sequence_number,
-            'type': event.event_type.name if event.event_type else '',
-            'date': event.date,
-            'person': person_name,
-            'institution': institution_name,
-            'actor': actor_name,
-            'certainty': event.get_certainty_display() if event.certainty else '',
-            'sources': [str(s) for s in event.sources.all()],
-            'notes': event.notes,
-        })
+    return {
+        'id': event.id,
+        'artwork_id': event.artwork.id,
+        'artwork_name': event.artwork.name,
+        'sequence': event.sequence_number,
+        'type': event.event_type.name if event.event_type else '',
+        'date': event.date,
+        'person': person_name,
+        'institution': institution_name,
+        'actor': actor_name,
+        'auction': str(event.auction) if event.auction else '',
+        'auction_id': event.auction.id if event.auction else None,
+        'auction_institution': str(event.auction.institution) if event.auction and event.auction.institution else '',
+        'exhibition': str(event.exhibition) if event.exhibition else '',
+        'exhibition_id': event.exhibition.id if event.exhibition else None,
+        'exhibition_institution': str(event.exhibition.institution) if event.exhibition and event.exhibition.institution else '',
+        'certainty': event.get_certainty_display() if event.certainty else '',
+        'sources': [str(s) for s in event.sources.all()],
+        'notes': event.notes,
+    }
+
+def artwork_detail(request, pk):
+    art = get_object_or_404(Artwork, pk=pk)
+    
+    # Provenance
+    events = [format_provenance_event(e) for e in art.provenance_events.all().order_by('sequence_number')]
 
     data = {
         'id': art.id,
@@ -115,14 +136,7 @@ def person_detail(request, pk):
     
     events = []
     for event in person.provenance_events.all().select_related('artwork'):
-        events.append({
-            'id': event.id,
-            'artwork_id': event.artwork.id,
-            'artwork_name': event.artwork.name,
-            'event_type': event.event_type_new.name if event.event_type_new else event.event_type,
-            'date': event.date,
-            'notes': event.notes,
-        })
+        events.append(format_provenance_event(event))
         
     data = {
         'id': person.id,

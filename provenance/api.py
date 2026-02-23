@@ -119,7 +119,7 @@ def person_detail(request, pk):
             'id': event.id,
             'artwork_id': event.artwork.id,
             'artwork_name': event.artwork.name,
-            'event_type': event.event_type_new.name if event.event_type_new else event.event_type,
+            'event_type': event.event_type.name if event.event_type else '',
             'date': event.date,
             'notes': event.notes,
         })

@@ -1,0 +1,136 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .sync-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        margin-top: 20px;
+    }
+
+    .sync-card {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 20px;
+        flex: 1;
+        min-width: 300px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .sync-card h2 {
+        margin-top: 0;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        color: #6d5dfc;
+    }
+
+    .btn-sync {
+        background-color: #6d5dfc;
+        color: white !important;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+        display: inline-block;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-danger {
+        background-color: #ba2121;
+    }
+
+    .mode-selection {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 6px;
+        margin: 15px 0;
+    }
+
+    .warning-text {
+        color: #ba2121;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; Database Synchronization
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+    {% if messages %}
+    <ul class="messagelist">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
+            {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="sync-container">
+        <!-- Download Section -->
+        <div class="sync-card">
+            <h2>1. Download Backup</h2>
+            <p>Generate and download a full JSON dump of the current database.</p>
+            <div style="margin-top: 20px;">
+                <a href="{% url 'admin_download_db' %}" class="btn-sync">
+                    Download database_dump.json
+                </a>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="sync-card">
+            <h2>2. Upload & Sync</h2>
+            <form action="{% url 'admin_upload_db' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div style="margin-bottom: 15px;">
+                    <label for="db_file" style="font-weight: bold; display: block; margin-bottom: 5px;">Select JSON
+                        file:</label>
+                    <input type="file" name="db_file" id="db_file" accept=".json" required>
+                </div>
+
+                <div class="mode-selection">
+                    <label style="font-weight: bold; display: block; margin-bottom: 10px;">Select Mode:</label>
+                    <div style="margin-bottom: 10px;">
+                        <input type="radio" name="mode" value="merge" id="mode_merge" checked>
+                        <label for="mode_merge"><strong>Merge/Update</strong> (Safe: updates/adds records)</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="mode" value="overwrite" id="mode_overwrite">
+                        <label for="mode_overwrite" class="warning-text"><strong>Full Overwrite</strong> (Destructive:
+                            clears DB first!)</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-sync btn-danger" onclick="return confirmSync()">
+                    Perform Synchronization
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmSync() {
+        var mode = document.querySelector('input[name="mode"]:checked').value;
+        var message = "Are you sure you want to proceed with the database synchronization?";
+        if (mode === 'overwrite') {
+            message = "CRITICAL WARNING:\n\nThis will DELETE all current data on the server and replace it with the uploaded file.\n\nAre you absolutely sure?";
+        }
+        return confirm(message);
+    }
+</script>
+{% endblock %}

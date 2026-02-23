@@ -19,9 +19,12 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from provenance import api, auth_api
+from provenance import api, auth_api, admin_views
 
 urlpatterns = [
+    path('admin/sync-db/', admin_views.db_sync_management, name='admin_sync_db'),
+    path('admin/download-db/', admin_views.download_db_dump, name='admin_download_db'),
+    path('admin/upload-db/', admin_views.upload_db_dump, name='admin_upload_db'),
     path('admin/', admin.site.urls),
     path('api/artworks/', api.artwork_list),
     path('api/artworks/<int:pk>/', api.artwork_detail),

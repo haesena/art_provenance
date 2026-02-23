@@ -78,6 +78,8 @@ export interface Person {
   first_name: string;
   birth_date: string | null;
   death_date: string | null;
+  artwork_count?: number;
+  event_count?: number;
 }
 
 export interface EventType {

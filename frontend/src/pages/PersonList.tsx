@@ -129,9 +129,17 @@ const PersonList: React.FC = () => {
                                     <h3 className="font-medium text-gray-900 truncate group-hover:text-indigo-600">
                                         {person.family_name}, {person.first_name}
                                     </h3>
-                                    <p className="text-xs text-gray-400">
+                                    <p className="text-xs text-gray-400 mb-1">
                                         {person.birth_date || '?'} — {person.death_date || '?'}
                                     </p>
+                                    <div className="flex gap-2">
+                                        <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-md font-medium">
+                                            {person.artwork_count || 0} {person.artwork_count === 1 ? 'Artwork' : 'Artworks'}
+                                        </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md font-medium">
+                                            {person.event_count || 0} {person.event_count === 1 ? 'Event' : 'Events'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </Link>

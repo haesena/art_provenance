@@ -107,7 +107,11 @@ def artwork_detail(request, pk):
     return JsonResponse(data)
 
 def person_list(request):
-    persons = Person.objects.all().order_by('family_name', 'first_name')
+    from django.db.models import Count
+    persons = Person.objects.annotate(
+        event_count=Count('provenance_events'),
+        artwork_count=Count('provenance_events__artwork', distinct=True)
+    ).order_by('family_name', 'first_name')
     
     event_type = request.GET.get('event_type')
     if event_type:
@@ -121,6 +125,8 @@ def person_list(request):
             'first_name': person.first_name,
             'birth_date': person.birth_date,
             'death_date': person.death_date,
+            'event_count': person.event_count,
+            'artwork_count': person.artwork_count,
         })
     return JsonResponse({'results': data})
 

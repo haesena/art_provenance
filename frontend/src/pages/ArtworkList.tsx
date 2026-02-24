@@ -180,9 +180,11 @@ const ArtworkList: React.FC = () => {
                                 </div>
                                 <div className="p-4">
                                     <h3 className="font-medium text-gray-900 group-hover:text-indigo-600 truncate">{art.name}</h3>
-                                    <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
-                                        <span>{art.creation_date || 'Unknown Date'}</span>
-                                        <span>{art.medium}</span>
+                                    <div className="mt-1 flex items-center justify-between text-[10px] font-medium">
+                                        <span className="text-gray-500">{art.creation_date || 'Unknown Date'}</span>
+                                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
+                                            {art.event_count || 0} Events
+                                        </span>
                                     </div>
                                 </div>
                             </div>

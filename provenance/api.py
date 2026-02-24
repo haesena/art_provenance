@@ -2,6 +2,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import Artwork, ProvenanceEvent, Person, ArtType, Medium
 
+from django.db.models import Count
+
 def artwork_list(request):
     artworks = Artwork.objects.all().select_related('medium', 'medium__type')
     
@@ -12,6 +14,10 @@ def artwork_list(request):
         artworks = artworks.filter(medium_id=medium_id)
     if art_type_id:
         artworks = artworks.filter(medium__type_id=art_type_id)
+
+    artworks = artworks.annotate(
+        event_count=Count('provenance_events', distinct=True)
+    )
 
     data = []
     for art in artworks:
@@ -24,6 +30,7 @@ def artwork_list(request):
             'art_type_id': art.medium.type.id if art.medium and art.medium.type else None,
             'dimension': art.dimension,
             'image': art.images.first().image.url if art.images.exists() else None,
+            'event_count': art.event_count,
             'creation_date': '', 
         })
     return JsonResponse({'results': data})
@@ -108,7 +115,7 @@ def artwork_detail(request, pk):
 
 def person_list(request):
     from django.db.models import Count
-    persons = Person.objects.annotate(
+    persons = Person.objects.prefetch_related('images').annotate(
         event_count=Count('provenance_events'),
         artwork_count=Count('provenance_events__artwork', distinct=True)
     ).order_by('family_name', 'first_name')
@@ -127,6 +134,7 @@ def person_list(request):
             'death_date': person.death_date,
             'event_count': person.event_count,
             'artwork_count': person.artwork_count,
+            'image': person.images.first().image.url if person.images.exists() else None,
         })
     return JsonResponse({'results': data})
 
@@ -138,7 +146,7 @@ def event_type_list(request):
     return JsonResponse({'results': data})
 
 def person_detail(request, pk):
-    person = get_object_or_404(Person, pk=pk)
+    person = get_object_or_404(Person.objects.prefetch_related('images'), pk=pk)
     
     events = []
     for event in person.provenance_events.all().select_related('artwork'):
@@ -151,6 +159,7 @@ def person_detail(request, pk):
         'birth_date': person.birth_date,
         'death_date': person.death_date,
         'biography': person.biography,
+        'image': person.images.first().image.url if person.images.exists() else None,
         'events': events,
     }
     return JsonResponse(data)

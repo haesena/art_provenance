@@ -122,8 +122,12 @@ const PersonList: React.FC = () => {
                     {filteredPersons.map((person) => (
                         <Link key={person.id} to={`/persons/${person.id}`} className="group">
                             <div className="bg-white p-4 border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 group-hover:bg-indigo-100 transition-colors">
-                                    <UserIcon className="w-6 h-6 text-indigo-600" />
+                                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 group-hover:bg-indigo-100 transition-colors overflow-hidden shrink-0">
+                                    {person.image ? (
+                                        <img src={person.image} alt={`${person.first_name} ${person.family_name}`} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <UserIcon className="w-6 h-6 text-indigo-600" />
+                                    )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-medium text-gray-900 truncate group-hover:text-indigo-600">

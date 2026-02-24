@@ -1,9 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getArtworkDetail, Artwork, ProvenanceEvent } from '../services/api';
-import { ArrowLeft, FileText, Anchor, BookOpen } from 'lucide-react';
+import {
+    ArrowLeft,
+    FileText,
+    Anchor,
+    BookOpen,
+    Gavel,
+    Building2,
+    Image as ImageIcon,
+    User as UserIcon,
+    ArrowRightLeft,
+    Calendar,
+    MapPin,
+    Info
+} from 'lucide-react';
 
 import { getDeterministicColor } from '../utils/colorUtils';
+
+const getEventIcon = (type: string) => {
+    const t = type.toLowerCase();
+    if (t.includes('auction') || t.includes('sale')) return <Gavel className="w-4 h-4" />;
+    if (t.includes('exhibition') || t.includes('loan')) return <ImageIcon className="w-4 h-4" />;
+    if (t.includes('museum') || t.includes('institution') || t.includes('gallery')) return <Building2 className="w-4 h-4" />;
+    if (t.includes('theft') || t.includes('confiscation') || t.includes('looting')) return <Info className="w-4 h-4 text-red-500" />;
+    if (t.includes('transfer') || t.includes('inheritance')) return <ArrowRightLeft className="w-4 h-4" />;
+    if (t.includes('person') || t.includes('owner') || t.includes('collection')) return <UserIcon className="w-4 h-4" />;
+    return <Anchor className="w-4 h-4" />;
+};
 
 const ArtworkDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -84,77 +108,108 @@ const ArtworkDetail: React.FC = () => {
             </div>
 
             {/* Provenance Timeline */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+            <div className="space-y-6">
+                <div className="flex items-center gap-2 px-2">
                     <Anchor className="w-5 h-5 text-indigo-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Provenance History</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Provenance History</h2>
                 </div>
-                <div className="p-6">
-                    <div className="relative border-l-2 border-indigo-100 ml-3 space-y-8">
+
+                <div className="relative">
+                    {/* Central Line */}
+                    <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-indigo-100"></div>
+
+                    <div className="space-y-10">
                         {artwork.provenance?.map((event: ProvenanceEvent) => (
-                            <div key={event.id} className="relative pl-8">
-                                {/* Dot */}
-                                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-indigo-50 border-2 border-indigo-500"></div>
+                            <div key={event.id} className="relative pl-16 group">
+                                {/* Icon Circle */}
+                                <div className="absolute left-0 top-0 w-12 h-12 rounded-full bg-white border-2 border-indigo-200 flex items-center justify-center z-10 shadow-sm group-hover:border-indigo-500 transition-colors">
+                                    <div className="text-indigo-600">
+                                        {getEventIcon(event.type)}
+                                    </div>
+                                </div>
 
-                                <div className="space-y-1">
-                                    {/* Line 1: Artwork Name */}
-                                    <h3 className="text-lg font-bold text-gray-900 leading-tight">
-                                        {event.artwork_name}
-                                    </h3>
+                                {/* Content Card */}
+                                <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded uppercase tracking-wider">
+                                                    {event.type}
+                                                </span>
+                                                {event.certainty && (
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${event.certainty === 'Proven' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                                                        {event.certainty}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h3 className="text-xl font-bold text-gray-900">
+                                                {event.artwork_name}
+                                            </h3>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-gray-400 font-mono text-sm bg-gray-50 px-3 py-1 rounded-full">
+                                            <Calendar className="w-3.5 h-3.5" />
+                                            {event.date || 'Unknown Date'}
+                                        </div>
+                                    </div>
 
-                                    {/* Line 2: Event Type and Actor (Person) */}
-                                    <div className="flex flex-col sm:flex-row sm:items-baseline justify-between">
-                                        <div className="text-[15px] text-gray-700">
-                                            <span className="font-semibold text-indigo-700">{event.type}</span>
-                                            {event.person && (
-                                                <> <span className="text-gray-400 font-normal italic">by</span> <span className="font-medium">{event.person}</span></>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                                        <div className="space-y-3">
+                                            <div className="flex items-start gap-2.5">
+                                                <UserIcon className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <p className="text-gray-500 text-xs font-semibold uppercase tracking-tight">Actor / Owner</p>
+                                                    <p className="text-gray-900 font-medium">{event.actor}</p>
+                                                </div>
+                                            </div>
+                                            {(event.institution || event.auction || event.exhibition) && (
+                                                <div className="flex items-start gap-2.5">
+                                                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                                                    <div>
+                                                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-tight">Location</p>
+                                                        <p className="text-gray-900 italic">
+                                                            {event.institution || (event.auction ? `Auction: ${event.auction}` : `Exhibition: ${event.exhibition}`)}
+                                                            {(event.auction_institution || event.exhibition_institution) &&
+                                                                ` at ${event.auction_institution || event.exhibition_institution}`
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             )}
                                         </div>
-                                        <span className="text-sm text-gray-400 font-mono">
-                                            {event.date || 'Unknown Date'}
-                                        </span>
+
+                                        <div className="space-y-3">
+                                            {event.notes && (
+                                                <div className="flex items-start gap-2.5">
+                                                    <Info className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                                                    <div>
+                                                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-tight">Notes</p>
+                                                        <p className="text-gray-600 leading-relaxed italic">"{event.notes}"</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {/* Line 3: Institution/Auction/Exhibition Place */}
-                                    <div className="min-h-[1.25rem]">
-                                        {event.institution && (
-                                            <p className="text-sm text-gray-500 italic">{event.institution}</p>
-                                        )}
-                                        {event.auction && (
-                                            <p className="text-sm text-gray-500 italic">
-                                                Auction: {event.auction} {event.auction_institution && ` at ${event.auction_institution}`}
-                                            </p>
-                                        )}
-                                        {event.exhibition && (
-                                            <p className="text-sm text-gray-500 italic">
-                                                Exhibition: {event.exhibition} {event.exhibition_institution && ` at ${event.exhibition_institution}`}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="text-sm text-gray-600">
-                                    {event.certainty && <span className={`inline-block px-2 py-0.5 rounded text-xs mr-2 mb-2 ${event.certainty === 'Proven' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{event.certainty}</span>}
-                                </div>
-
-                                {event.sources && event.sources.length > 0 && (
-                                    <div className="mt-2 space-y-1">
-                                        {event.sources.map((src, idx) => (
-                                            <div key={idx} className="text-xs text-gray-500 flex items-start gap-1.5 bg-gray-50 p-2 rounded">
-                                                <BookOpen className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                                                <span>{src}</span>
+                                    {event.sources && event.sources.length > 0 && (
+                                        <div className="pt-4 border-t border-gray-50">
+                                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-2">Primary Sources</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {event.sources.map((src, idx) => (
+                                                    <div key={idx} className="text-[11px] text-gray-600 flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg">
+                                                        <BookOpen className="w-3 h-3 text-indigo-400" />
+                                                        <span>{src}</span>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {event.notes && (
-                                    <p className="mt-2 text-sm text-gray-600 italic">"{event.notes}"</p>
-                                )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))}
                         {(!artwork.provenance || artwork.provenance.length === 0) && (
-                            <p className="text-gray-500 text-sm pl-8">No provenance records found.</p>
+                            <div className="pl-16 py-12 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                <p className="text-gray-500 font-medium">No provenance records found for this artwork.</p>
+                            </div>
                         )}
                     </div>
                 </div>

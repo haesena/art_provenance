@@ -35,6 +35,7 @@ export interface Artwork {
   dimension: string;
   creation_date: string;
   image: string | null;
+  event_count?: number;
   notes?: string;
   provenance?: ProvenanceEvent[];
 }
@@ -80,6 +81,7 @@ export interface Person {
   death_date: string | null;
   artwork_count?: number;
   event_count?: number;
+  image?: string | null;
 }
 
 export interface EventType {

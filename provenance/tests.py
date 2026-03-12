@@ -83,3 +83,32 @@ class ProvenanceEventExclusivityTest(TestCase):
             event.full_clean()
         
         self.assertIn("Only one of Institution, Auction, or Exhibition can be set.", str(cm.exception))
+class EventSourceNotesTest(TestCase):
+    def setUp(self):
+        self.art_type = ArtType.objects.create(name="Painting")
+        self.medium = Medium.objects.create(name="Oil on Canvas", type=self.art_type)
+        self.artwork = Artwork.objects.create(name="Test Artwork", medium=self.medium)
+        self.event_type = EventType.objects.create(name="Sale")
+        self.source = Source.objects.create(source="Test Source")
+        self.event = ProvenanceEvent.objects.create(
+            artwork=self.artwork,
+            event_type=self.event_type,
+            sequence_number=1
+        )
+
+    def test_source_notes_save_retrieval(self):
+        from .models import EventSource
+        notes_text = "Highly reliable source."
+        es = EventSource.objects.create(
+            provenance_event=self.event,
+            source=self.source,
+            source_notes=notes_text
+        )
+        
+        # Refresh and verify
+        es.refresh_from_db()
+        self.assertEqual(es.source_notes, notes_text)
+        
+        # Verify through ProvenanceEvent
+        self.assertEqual(self.event.sources.count(), 1)
+        self.assertEqual(self.event.eventsource_set.first().source_notes, notes_text)

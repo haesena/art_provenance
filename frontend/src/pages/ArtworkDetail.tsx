@@ -195,9 +195,16 @@ const ArtworkDetail: React.FC = () => {
                                             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-2">Primary Sources</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {event.sources.map((src, idx) => (
-                                                    <div key={idx} className="text-[11px] text-gray-600 flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg">
-                                                        <BookOpen className="w-3 h-3 text-indigo-400" />
-                                                        <span>{src}</span>
+                                                    <div key={idx} className="flex flex-col gap-1">
+                                                        <div className="text-[11px] text-gray-600 flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg">
+                                                            <BookOpen className="w-3 h-3 text-indigo-400" />
+                                                            <span className="font-medium">{src.source}</span>
+                                                        </div>
+                                                        {src.notes && (
+                                                            <div className="pl-6 text-[10px] text-gray-400 italic">
+                                                                {src.notes}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>

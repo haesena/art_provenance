@@ -1,11 +1,12 @@
 from django.contrib import admin
 from django.db import models
-from django.forms import Textarea
+from django.forms import Textarea, TextInput
 from django.contrib.contenttypes.admin import GenericTabularInline
 from .models import (
     Person, Institution, InstitutionType, ArtType, Artwork,
     ArtworkGroup, Source, ProvenanceEvent, ArtworkRelationship,
-    Image, Medium, Auction, AuctionPerson, Exhibition, EventType
+    Image, Medium, Auction, AuctionPerson, Exhibition, EventType,
+    EventSource
 )
 
 class ImageInline(GenericTabularInline):
@@ -81,13 +82,20 @@ class SourceAdmin(admin.ModelAdmin):
         models.CharField: {'widget': Textarea(attrs={'rows': 4, 'cols': 80})},
     }
 
+class EventSourceInline(admin.StackedInline):
+    model = EventSource
+    extra = 1
+    formfield_overrides = {
+        models.CharField: {'widget': TextInput(attrs={'size': '100'})},
+    }
+
 @admin.register(ProvenanceEvent)
 class ProvenanceEventAdmin(admin.ModelAdmin):
     list_display = ('artwork', 'sequence_number', 'event_type', 'date', 'person', 'institution', 'auction', 'exhibition')
     list_filter = ('event_type', 'certainty', 'auction', 'exhibition')
     ordering = ('artwork', 'sequence_number')
     search_fields = ('artwork__name', 'person__family_name', 'person__first_name', 'institution__name', 'notes')
-    filter_horizontal = ('sources',)
+    inlines = [EventSourceInline]
 
 @admin.register(ArtworkGroup)
 class ArtworkGroupAdmin(admin.ModelAdmin):

@@ -6,7 +6,7 @@ import { getDeterministicColor } from '../utils/colorUtils';
 
 const InstitutionReport: React.FC = () => {
     const [institutions, setInstitutions] = useState<Institution[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true); ()
     const [expandedIds, setExpandedIds] = useState<number[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -25,12 +25,12 @@ const InstitutionReport: React.FC = () => {
     }, []);
 
     const toggleExpand = (id: number) => {
-        setExpandedIds(prev => 
+        setExpandedIds(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
     };
 
-    const filteredInstitutions = institutions.filter(inst => 
+    const filteredInstitutions = institutions.filter(inst =>
         inst.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         inst.place.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -65,7 +65,7 @@ const InstitutionReport: React.FC = () => {
             <div className="grid gap-4">
                 {filteredInstitutions.map((inst) => (
                     <div key={inst.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <button 
+                        <button
                             onClick={() => toggleExpand(inst.id)}
                             className="w-full text-left p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
@@ -82,8 +82,8 @@ const InstitutionReport: React.FC = () => {
                                 <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">
                                     {inst.artwork_count} Artworks
                                 </span>
-                                {expandedIds.includes(inst.id) ? 
-                                    <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                                {expandedIds.includes(inst.id) ?
+                                    <ChevronDown className="w-5 h-5 text-gray-400" /> :
                                     <ChevronRight className="w-5 h-5 text-gray-400" />
                                 }
                             </div>

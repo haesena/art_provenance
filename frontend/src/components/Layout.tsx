@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { BookOpen, Database, BarChart2, LogOut, User as UserIcon, Settings, Menu, X } from 'lucide-react';
+import { BookOpen, Database, BarChart2, LogOut, User as UserIcon, Settings, Menu, X, Landmark } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Layout: React.FC = () => {
@@ -19,7 +19,7 @@ const Layout: React.FC = () => {
     const navLinks = [
         { to: '/', icon: Database, label: 'Artworks', active: location.pathname === '/' || location.pathname.startsWith('/artworks') },
         { to: '/persons', icon: UserIcon, label: 'Persons', active: location.pathname.startsWith('/persons') },
-        { to: '/analysis', icon: BarChart2, label: 'Analysis', active: location.pathname === '/analysis' },
+        { to: '/analysis', icon: BarChart2, label: 'Analysis', active: location.pathname.startsWith('/analysis') },
     ];
 
     return (

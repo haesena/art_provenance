@@ -33,6 +33,9 @@ urlpatterns = [
     path('api/event-types/', api.event_type_list, name='event-type-list'),
     path('api/art-types/', api.art_type_list, name='art-type-list'),
     path('api/mediums/', api.medium_list, name='medium-list'),
+    path('api/institutions/', api.institution_list, name='institution-list'),
+    path('api/auctions/', api.auction_list, name='auction-list'),
+    path('api/exhibitions/', api.exhibition_list, name='exhibition-list'),
     
     # Auth API
     path('api/auth/csrf/', auth_api.get_csrf_token),

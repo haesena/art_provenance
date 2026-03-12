@@ -163,3 +163,132 @@ def person_detail(request, pk):
         'events': events,
     }
     return JsonResponse(data)
+
+def institution_list(request):
+    from .models import Institution, ProvenanceEvent
+    from django.db.models import Prefetch
+
+    institutions = Institution.objects.all().order_by('name')
+    
+    data = []
+    for inst in institutions:
+        # Artworks directly linked to provenance events with this institution
+        direct_events = ProvenanceEvent.objects.filter(institution=inst).select_related('artwork', 'event_type')
+        
+        # Artworks linked via auctions held at this institution
+        auction_events = ProvenanceEvent.objects.filter(auction__institution=inst).select_related('artwork', 'event_type')
+        
+        # Artworks linked via exhibitions held at this institution
+        exhibition_events = ProvenanceEvent.objects.filter(exhibition__institution=inst).select_related('artwork', 'event_type')
+        
+        # Map artwork_id to {artwork_info, event_types_set}
+        artwork_map = {}
+        
+        all_events = list(direct_events) + list(auction_events) + list(exhibition_events)
+        
+        for event in all_events:
+            art = event.artwork
+            if art.id not in artwork_map:
+                artwork_map[art.id] = {
+                    'id': art.id,
+                    'name': art.name,
+                    'image': art.images.first().image.url if art.images.exists() else None,
+                    'event_types': set()
+                }
+            if event.event_type:
+                artwork_map[art.id]['event_types'].add(event.event_type.name)
+        
+        artworks_data = []
+        for art_id, art_info in artwork_map.items():
+            art_info['event_types'] = sorted(list(art_info['event_types']))
+            artworks_data.append(art_info)
+        
+        if artworks_data:
+            data.append({
+                'id': inst.id,
+                'name': inst.name,
+                'place': inst.place,
+                'artworks': artworks_data,
+                'artwork_count': len(artworks_data)
+            })
+            
+    return JsonResponse({'results': data})
+
+def auction_list(request):
+    from .models import Auction, ProvenanceEvent
+    
+    auctions = Auction.objects.all().order_by('name')
+    
+    data = []
+    for auction in auctions:
+        events = ProvenanceEvent.objects.filter(auction=auction).select_related('artwork', 'event_type')
+        
+        artwork_map = {}
+        for event in events:
+            art = event.artwork
+            if art.id not in artwork_map:
+                artwork_map[art.id] = {
+                    'id': art.id,
+                    'name': art.name,
+                    'image': art.images.first().image.url if art.images.exists() else None,
+                    'event_types': set()
+                }
+            if event.event_type:
+                artwork_map[art.id]['event_types'].add(event.event_type.name)
+        
+        artworks_data = []
+        for art_id, art_info in artwork_map.items():
+            art_info['event_types'] = sorted(list(art_info['event_types']))
+            artworks_data.append(art_info)
+            
+        if artworks_data:
+            data.append({
+                'id': auction.id,
+                'name': auction.name,
+                'date': auction.date,
+                'institution': str(auction.institution) if auction.institution else '',
+                'artworks': artworks_data,
+                'artwork_count': len(artworks_data)
+            })
+            
+    return JsonResponse({'results': data})
+
+def exhibition_list(request):
+    from .models import Exhibition, ProvenanceEvent
+    
+    exhibitions = Exhibition.objects.all().order_by('name')
+    
+    data = []
+    for exhibition in exhibitions:
+        events = ProvenanceEvent.objects.filter(exhibition=exhibition).select_related('artwork', 'event_type')
+        
+        artwork_map = {}
+        for event in events:
+            art = event.artwork
+            if art.id not in artwork_map:
+                artwork_map[art.id] = {
+                    'id': art.id,
+                    'name': art.name,
+                    'image': art.images.first().image.url if art.images.exists() else None,
+                    'event_types': set()
+                }
+            if event.event_type:
+                artwork_map[art.id]['event_types'].add(event.event_type.name)
+        
+        artworks_data = []
+        for art_id, art_info in artwork_map.items():
+            art_info['event_types'] = sorted(list(art_info['event_types']))
+            artworks_data.append(art_info)
+            
+        if artworks_data:
+            data.append({
+                'id': exhibition.id,
+                'name': exhibition.name,
+                'date_start': exhibition.date_start,
+                'date_end': exhibition.date_end,
+                'institution': str(exhibition.institution) if exhibition.institution else '',
+                'artworks': artworks_data,
+                'artwork_count': len(artworks_data)
+            })
+            
+    return JsonResponse({'results': data})

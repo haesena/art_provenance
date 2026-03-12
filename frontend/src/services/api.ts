@@ -89,6 +89,48 @@ export interface EventType {
   name: string;
 }
 
+export interface Institution {
+  id: number;
+  name: string;
+  place: string;
+  artwork_count: number;
+  artworks: {
+    id: number;
+    name: string;
+    image: string | null;
+    event_types: string[];
+  }[];
+}
+
+export interface AuctionReport {
+  id: number;
+  name: string;
+  date: string;
+  institution: string;
+  artwork_count: number;
+  artworks: {
+    id: number;
+    name: string;
+    image: string | null;
+    event_types: string[];
+  }[];
+}
+
+export interface ExhibitionReport {
+  id: number;
+  name: string;
+  date_start: string;
+  date_end: string;
+  institution: string;
+  artwork_count: number;
+  artworks: {
+    id: number;
+    name: string;
+    image: string | null;
+    event_types: string[];
+  }[];
+}
+
 export interface PersonDetail extends Person {
   biography: string;
   events: (ProvenanceEvent & {
@@ -131,6 +173,21 @@ export const getArtTypes = async () => {
 
 export const getMediums = async () => {
   const response = await api.get<{ results: Medium[] }>('/mediums/');
+  return response.data;
+};
+
+export const getInstitutions = async () => {
+  const response = await api.get<{ results: Institution[] }>('/institutions/');
+  return response.data;
+};
+
+export const getAuctionsReport = async () => {
+  const response = await api.get<{ results: AuctionReport[] }>('/auctions/');
+  return response.data;
+};
+
+export const getExhibitionsReport = async () => {
+  const response = await api.get<{ results: ExhibitionReport[] }>('/exhibitions/');
   return response.data;
 };
 

@@ -114,7 +114,8 @@ class ProvenanceEvent(models.Model):
     certainty = models.CharField(max_length=20, choices=CERTAINTY_CHOICES, blank=True, null=True)
     notes = models.TextField(blank=True)
     
-    sources = models.ManyToManyField(Source, blank=True, related_name='provenance_events', through='EventSource')
+    source = models.ForeignKey(Source, on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
+    source_notes = models.CharField(max_length=100, blank=True, help_text="Additional notes for this source.")
 
     def clean(self):
         super().clean()
@@ -130,13 +131,6 @@ class ProvenanceEvent(models.Model):
     def __str__(self):
         return f"{self.sequence_number}. {self.event_type} - {self.artwork}"
 
-class EventSource(models.Model):
-    provenance_event = models.ForeignKey(ProvenanceEvent, on_delete=models.CASCADE)
-    source = models.ForeignKey(Source, on_delete=models.CASCADE)
-    source_notes = models.CharField(max_length=100, blank=True, help_text="Additional notes for this source.")
-
-    def __str__(self):
-        return f"{self.source} on {self.provenance_event}"
 
 class ArtworkRelationship(models.Model):
     RELATION_TYPES = [

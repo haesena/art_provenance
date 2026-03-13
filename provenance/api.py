@@ -91,7 +91,8 @@ def format_provenance_event(event):
         'exhibition_id': event.exhibition.id if event.exhibition else None,
         'exhibition_institution': str(event.exhibition.institution) if event.exhibition and event.exhibition.institution else '',
         'certainty': event.get_certainty_display() if event.certainty else '',
-        'sources': [{'source': str(es.source), 'notes': es.source_notes} for es in event.eventsource_set.all()],
+        'source': str(event.source) if event.source else '',
+        'source_notes': event.source_notes,
         'notes': event.notes,
     }
 

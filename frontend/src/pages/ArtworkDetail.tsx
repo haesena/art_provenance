@@ -102,6 +102,7 @@ const ArtworkDetail: React.FC = () => {
                                 <FileText className="w-4 h-4" /> Notes
                             </h3>
                             <p className="text-gray-600 text-sm whitespace-pre-wrap">{artwork.notes}</p>
+                            
                         </div>
                     )}
                 </div>
@@ -190,23 +191,21 @@ const ArtworkDetail: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {event.sources && event.sources.length > 0 && (
+                                    {(event.source || event.source_notes) && (
                                         <div className="pt-4 border-t border-gray-50">
-                                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-2">Primary Sources</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {event.sources.map((src, idx) => (
-                                                    <div key={idx} className="flex flex-col gap-1">
-                                                        <div className="text-[11px] text-gray-600 flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg">
-                                                            <BookOpen className="w-3 h-3 text-indigo-400" />
-                                                            <span className="font-medium">{src.source}</span>
-                                                        </div>
-                                                        {src.notes && (
-                                                            <div className="pl-6 text-[10px] text-gray-400 italic">
-                                                                {src.notes}
-                                                            </div>
-                                                        )}
+                                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-2">Primary Source</p>
+                                            <div className="space-y-1">
+                                                {event.source && (
+                                                    <div className="text-[11px] text-gray-600 flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg w-fit">
+                                                        <BookOpen className="w-3 h-3 text-indigo-400" />
+                                                        <span className="font-medium">{event.source}</span>
                                                     </div>
-                                                ))}
+                                                )}
+                                                {event.source_notes && (
+                                                    <div className="pl-4 text-[10px] text-gray-400 italic">
+                                                        {event.source_notes}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     )}

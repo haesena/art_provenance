@@ -5,17 +5,33 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from .models import (
     Person, Institution, InstitutionType, ArtType, Artwork,
     ArtworkGroup, Source, ProvenanceEvent, ArtworkRelationship,
-    Image, Medium, Auction, AuctionPerson, Exhibition, EventType,
-    EventSource
+    Image, Medium, Auction, AuctionPerson, Exhibition, EventType
 )
 
 class ImageInline(GenericTabularInline):
     model = Image
     extra = 1
 
-class ProvenanceEventInline(admin.TabularInline):
+class ProvenanceEventInline(admin.StackedInline):
     model = ProvenanceEvent
     extra = 1
+    fieldsets = (
+        (None, {
+            'fields': (
+                ('sequence_number', 'event_type', 'date'),
+                ('person', 'institution'),
+                ('auction', 'exhibition'),
+                ('certainty', 'notes'),
+                'source',
+                'source_notes',
+            )
+        }),
+    )
+    formfield_overrides = {
+        models.CharField: {'widget': TextInput(attrs={'size': '40'})},
+    }
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('event_type', 'person', 'institution', 'auction', 'exhibition', 'source')
 
 @admin.register(Person)
 class PersonAdmin(admin.ModelAdmin):
@@ -82,20 +98,12 @@ class SourceAdmin(admin.ModelAdmin):
         models.CharField: {'widget': Textarea(attrs={'rows': 4, 'cols': 80})},
     }
 
-class EventSourceInline(admin.StackedInline):
-    model = EventSource
-    extra = 1
-    formfield_overrides = {
-        models.CharField: {'widget': TextInput(attrs={'size': '100'})},
-    }
-
 @admin.register(ProvenanceEvent)
 class ProvenanceEventAdmin(admin.ModelAdmin):
-    list_display = ('artwork', 'sequence_number', 'event_type', 'date', 'person', 'institution', 'auction', 'exhibition')
-    list_filter = ('event_type', 'certainty', 'auction', 'exhibition')
+    list_display = ('artwork', 'sequence_number', 'event_type', 'date', 'person', 'institution', 'auction', 'exhibition', 'source')
+    list_filter = ('event_type', 'certainty', 'auction', 'exhibition', 'source')
     ordering = ('artwork', 'sequence_number')
-    search_fields = ('artwork__name', 'person__family_name', 'person__first_name', 'institution__name', 'notes')
-    inlines = [EventSourceInline]
+    search_fields = ('artwork__name', 'person__family_name', 'person__first_name', 'institution__name', 'notes', 'source_notes')
 
 @admin.register(ArtworkGroup)
 class ArtworkGroupAdmin(admin.ModelAdmin):

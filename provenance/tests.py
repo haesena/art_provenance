@@ -83,26 +83,37 @@ class ProvenanceEventExclusivityTest(TestCase):
             event.full_clean()
         
         self.assertIn("Only one of Institution, Auction, or Exhibition can be set.", str(cm.exception))
+from .models import Source, Artwork, ProvenanceEvent, Institution, Auction, Exhibition, EventType, ArtType, Medium, ProvenanceEventSource
+
+# ... (rest of imports)
+
 class EventSourceNotesTest(TestCase):
     def setUp(self):
         self.art_type = ArtType.objects.create(name="Painting")
         self.medium = Medium.objects.create(name="Oil on Canvas", type=self.art_type)
         self.artwork = Artwork.objects.create(name="Test Artwork", medium=self.medium)
         self.event_type = EventType.objects.create(name="Sale")
-        self.source = Source.objects.create(source="Test Source")
+        self.source1 = Source.objects.create(source="Source 1")
+        self.source2 = Source.objects.create(source="Source 2")
         self.event = ProvenanceEvent.objects.create(
             artwork=self.artwork,
             event_type=self.event_type,
             sequence_number=1
         )
 
-    def test_source_notes_save_retrieval(self):
-        notes_text = "Highly reliable source."
-        self.event.source = self.source
-        self.event.source_notes = notes_text
-        self.event.save()
+    def test_multiple_source_notes_save_retrieval(self):
+        notes1 = "First source notes."
+        notes2 = "Second source notes."
+        
+        ProvenanceEventSource.objects.create(event=self.event, source=self.source1, notes=notes1)
+        ProvenanceEventSource.objects.create(event=self.event, source=self.source2, notes=notes2)
         
         # Refresh and verify
         self.event.refresh_from_db()
-        self.assertEqual(self.event.source, self.source)
-        self.assertEqual(self.event.source_notes, notes_text)
+        self.assertEqual(self.event.sources.count(), 2)
+        
+        pes1 = ProvenanceEventSource.objects.get(event=self.event, source=self.source1)
+        self.assertEqual(pes1.notes, notes1)
+        
+        pes2 = ProvenanceEventSource.objects.get(event=self.event, source=self.source2)
+        self.assertEqual(pes2.notes, notes2)

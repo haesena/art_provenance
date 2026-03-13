@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { BookOpen, Database, BarChart2, LogOut, User as UserIcon, Settings, Menu, X, Landmark } from 'lucide-react';
+import { BookOpen, Database, BarChart2, LogOut, User as UserIcon, Settings, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Layout: React.FC = () => {

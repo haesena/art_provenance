@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getInstitutions, Institution } from '../services/api';
-import { Home, Landmark, ChevronRight, ChevronDown, ImageIcon, Search } from 'lucide-react';
+import { Landmark, ChevronRight, ChevronDown, ImageIcon, Search } from 'lucide-react';
 import { getDeterministicColor } from '../utils/colorUtils';
 
 const InstitutionReport: React.FC = () => {
     const [institutions, setInstitutions] = useState<Institution[]>([]);
-    const [loading, setLoading] = useState(true); ()
+    const [loading, setLoading] = useState(true);
     const [expandedIds, setExpandedIds] = useState<number[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 

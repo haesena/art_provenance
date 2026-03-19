@@ -119,7 +119,7 @@ def artwork_detail(request, pk):
 def person_list(request):
     from django.db.models import Count
     persons = Person.objects.prefetch_related('images').annotate(
-        event_count=Count('provenance_events'),
+        event_count=Count('provenance_events', distinct=True),
         artwork_count=Count('provenance_events__artwork', distinct=True)
     ).order_by('family_name', 'first_name')
     
@@ -295,3 +295,73 @@ def exhibition_list(request):
             })
             
     return JsonResponse({'results': data})
+
+def event_report(request):
+    from .models import ProvenanceEvent
+    
+    events = ProvenanceEvent.objects.select_related(
+        'artwork', 
+        'event_type', 
+        'person', 
+        'institution', 
+        'auction', 
+        'exhibition'
+    ).order_by('artwork__name', 'sequence_number')
+    
+    data = []
+    for event in events:
+        data.append({
+            'id': event.id,
+            'artwork_id': event.artwork.id,
+            'artwork_name': event.artwork.name,
+            'sequence_number': event.sequence_number,
+            'event_type_id': event.event_type.id if event.event_type else None,
+            'event_type_name': event.event_type.name if event.event_type else '',
+            'date': event.date,
+            'person': str(event.person) if event.person else '',
+            'institution': str(event.institution) if event.institution else '',
+            'auction': str(event.auction) if event.auction else '',
+            'exhibition': str(event.exhibition) if event.exhibition else '',
+            'certainty': event.get_certainty_display() if event.certainty else ''
+        })
+        
+    return JsonResponse({'results': data})
+
+def export_event_report_excel(request):
+    import openpyxl
+    from django.http import HttpResponse
+    from .models import ProvenanceEvent
+
+    events = ProvenanceEvent.objects.select_related(
+        'artwork', 'event_type', 'person', 'institution', 'auction', 'exhibition'
+    ).order_by('artwork__name', 'sequence_number')
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Event Report"
+
+    headers = [
+        'Art ID', 'Artwork Name', 'Sequence #', 'Type ID', 'Event Type',
+        'Date', 'Person', 'Institution', 'Auction', 'Exhibition', 'Certainty'
+    ]
+    ws.append(headers)
+
+    for event in events:
+        ws.append([
+            event.artwork.id,
+            event.artwork.name,
+            event.sequence_number,
+            event.event_type.id if event.event_type else None,
+            event.event_type.name if event.event_type else '',
+            event.date,
+            str(event.person) if event.person else '',
+            str(event.institution) if event.institution else '',
+            str(event.auction) if event.auction else '',
+            str(event.exhibition) if event.exhibition else '',
+            event.get_certainty_display() if event.certainty else ''
+        ])
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="event_report.xlsx"'
+    wb.save(response)
+    return response

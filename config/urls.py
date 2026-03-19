@@ -36,6 +36,8 @@ urlpatterns = [
     path('api/institutions/', api.institution_list, name='institution-list'),
     path('api/auctions/', api.auction_list, name='auction-list'),
     path('api/exhibitions/', api.exhibition_list, name='exhibition-list'),
+    path('api/events/report/', api.event_report, name='event-report'),
+    path('api/events/report/export/', api.export_event_report_excel, name='export-event-report'),
     
     # Auth API
     path('api/auth/csrf/', auth_api.get_csrf_token),

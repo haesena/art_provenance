@@ -214,3 +214,23 @@ export const getMe = async () => {
 export const fetchCsrfToken = async () => {
   await api.get('/auth/csrf/');
 };
+
+export interface EventReportRow {
+  id: number;
+  artwork_id: number;
+  artwork_name: string;
+  sequence_number: number;
+  event_type_id: number | null;
+  event_type_name: string;
+  date: string | null;
+  person: string;
+  institution: string;
+  auction: string;
+  exhibition: string;
+  certainty: string;
+}
+
+export const getEventReport = async () => {
+  const response = await api.get<{ results: EventReportRow[] }>('/events/report/');
+  return response.data;
+};

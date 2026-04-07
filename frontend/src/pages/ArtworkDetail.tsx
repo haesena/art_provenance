@@ -191,21 +191,23 @@ const ArtworkDetail: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {(event.source || event.source_notes) && (
+                                    {event.sources && event.sources.length > 0 && (
                                         <div className="pt-4 border-t border-gray-50">
-                                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-2">Primary Source</p>
-                                            <div className="space-y-1">
-                                                {event.source && (
-                                                    <div className="text-[11px] text-gray-600 flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg w-fit">
-                                                        <BookOpen className="w-3 h-3 text-indigo-400" />
-                                                        <span className="font-medium">{event.source}</span>
+                                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-2">Sources</p>
+                                            <div className="space-y-2">
+                                                {event.sources.map((s, idx) => (
+                                                    <div key={idx} className="space-y-1">
+                                                        <div className="text-[11px] text-gray-600 flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg w-fit">
+                                                            <BookOpen className="w-3 h-3 text-indigo-400" />
+                                                            <span className="font-medium">{s.source}</span>
+                                                        </div>
+                                                        {s.notes && (
+                                                            <div className="pl-4 text-[10px] text-gray-400 italic">
+                                                                {s.notes}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                                {event.source_notes && (
-                                                    <div className="pl-4 text-[10px] text-gray-400 italic">
-                                                        {event.source_notes}
-                                                    </div>
-                                                )}
+                                                ))}
                                             </div>
                                         </div>
                                     )}

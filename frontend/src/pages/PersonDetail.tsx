@@ -158,12 +158,23 @@ const PersonDetailPage: React.FC = () => {
                                     </div>
 
                                     <div className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-gray-50 gap-4">
-                                        {event.source ? (
+                                        {event.sources && event.sources.length > 0 ? (
                                             <div className="flex-1">
-                                                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-2">Source</p>
-                                                <div className="text-[11px] text-gray-600 flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg w-fit">
-                                                    <BookOpen className="w-3 h-3 text-indigo-400" />
-                                                    <span>{event.source}</span>
+                                                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-2">Sources</p>
+                                                <div className="space-y-2">
+                                                    {event.sources.map((s, idx) => (
+                                                        <div key={idx} className="flex flex-col gap-1 w-fit">
+                                                            <div className="text-[11px] text-gray-600 flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg">
+                                                                <BookOpen className="w-3 h-3 text-indigo-400" />
+                                                                <span>{s.source}</span>
+                                                            </div>
+                                                            {s.notes && (
+                                                                <div className="pl-4 text-[10px] text-gray-400 italic">
+                                                                    {s.notes}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         ) : <div className="flex-1" />}

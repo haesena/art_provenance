@@ -69,8 +69,7 @@ export interface ProvenanceEvent {
   exhibition_id?: number;
   exhibition_institution?: string;
   certainty: string;
-  source: string;
-  source_notes: string;
+  sources: { source: string; notes?: string }[];
   notes: string;
 }
 

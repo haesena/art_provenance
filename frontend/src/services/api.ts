@@ -131,6 +131,20 @@ export interface ExhibitionReport {
   }[];
 }
 
+export interface SourceReport {
+  id: number;
+  name: string;
+  type: string;
+  link: string | null;
+  artwork_count: number;
+  artworks: {
+    id: number;
+    name: string;
+    image: string | null;
+    event_types: string[];
+  }[];
+}
+
 export interface PersonDetail extends Person {
   biography: string;
   events: (ProvenanceEvent & {
@@ -191,6 +205,11 @@ export const getExhibitionsReport = async () => {
   return response.data;
 };
 
+export const getSourcesReport = async () => {
+  const response = await api.get<{ results: SourceReport[] }>('/sources/');
+  return response.data;
+};
+
 export const getPersonDetail = async (id: number) => {
   const response = await api.get<PersonDetail>(`/persons/${id}/`);
   return response.data;
@@ -215,7 +234,7 @@ export const fetchCsrfToken = async () => {
 };
 
 export interface EventReportRow {
-  id: number;
+  id: string | number;
   artwork_id: number;
   artwork_name: string;
   sequence_number: number;
@@ -227,6 +246,7 @@ export interface EventReportRow {
   auction: string;
   exhibition: string;
   certainty: string;
+  sources: string;
 }
 
 export const getEventReport = async () => {

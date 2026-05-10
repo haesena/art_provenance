@@ -305,13 +305,14 @@ def event_report(request):
         'person', 
         'institution', 
         'auction', 
-        'exhibition'
+    ).prefetch_related(
+        'provenanceeventsource_set__source'
     ).order_by('artwork__name', 'sequence_number')
     
     data = []
     for event in events:
-        data.append({
-            'id': event.id,
+        sources = list(event.provenanceeventsource_set.all())
+        base_event_data = {
             'artwork_id': event.artwork.id,
             'artwork_name': event.artwork.name,
             'sequence_number': event.sequence_number,
@@ -322,8 +323,19 @@ def event_report(request):
             'institution': str(event.institution) if event.institution else '',
             'auction': str(event.auction) if event.auction else '',
             'exhibition': str(event.exhibition) if event.exhibition else '',
-            'certainty': event.get_certainty_display() if event.certainty else ''
-        })
+            'certainty': event.get_certainty_display() if event.certainty else '',
+        }
+        
+        if not sources:
+            base_event_data['id'] = f"{event.id}_0"
+            base_event_data['sources'] = ''
+            data.append(base_event_data)
+        else:
+            for s in sources:
+                event_copy = base_event_data.copy()
+                event_copy['id'] = f"{event.id}_{s.id}"
+                event_copy['sources'] = str(s.source)
+                data.append(event_copy)
         
     return JsonResponse({'results': data})
 
@@ -334,6 +346,8 @@ def export_event_report_excel(request):
 
     events = ProvenanceEvent.objects.select_related(
         'artwork', 'event_type', 'person', 'institution', 'auction', 'exhibition'
+    ).prefetch_related(
+        'provenanceeventsource_set__source'
     ).order_by('artwork__name', 'sequence_number')
 
     wb = openpyxl.Workbook()
@@ -342,12 +356,13 @@ def export_event_report_excel(request):
 
     headers = [
         'Art ID', 'Artwork Name', 'Sequence #', 'Type ID', 'Event Type',
-        'Date', 'Person', 'Institution', 'Auction', 'Exhibition', 'Certainty'
+        'Date', 'Person', 'Institution', 'Auction', 'Exhibition', 'Certainty', 'Sources'
     ]
     ws.append(headers)
 
     for event in events:
-        ws.append([
+        sources = list(event.provenanceeventsource_set.all())
+        base_row = [
             event.artwork.id,
             event.artwork.name,
             event.sequence_number,
@@ -358,10 +373,55 @@ def export_event_report_excel(request):
             str(event.institution) if event.institution else '',
             str(event.auction) if event.auction else '',
             str(event.exhibition) if event.exhibition else '',
-            event.get_certainty_display() if event.certainty else ''
-        ])
+            event.get_certainty_display() if event.certainty else '',
+        ]
+        
+        if not sources:
+            ws.append(base_row + [''])
+        else:
+            for s in sources:
+                ws.append(base_row + [str(s.source)])
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="event_report.xlsx"'
     wb.save(response)
     return response
+
+def source_list(request):
+    from .models import Source, ProvenanceEvent
+    
+    sources = Source.objects.all().order_by('source')
+    
+    data = []
+    for src in sources:
+        events = ProvenanceEvent.objects.filter(sources=src).select_related('artwork', 'event_type')
+        
+        artwork_map = {}
+        for event in events:
+            art = event.artwork
+            if art.id not in artwork_map:
+                artwork_map[art.id] = {
+                    'id': art.id,
+                    'name': art.name,
+                    'image': art.images.first().image.url if art.images.exists() else None,
+                    'event_types': set()
+                }
+            if event.event_type:
+                artwork_map[art.id]['event_types'].add(event.event_type.name)
+        
+        artworks_data = []
+        for art_id, art_info in artwork_map.items():
+            art_info['event_types'] = sorted(list(art_info['event_types']))
+            artworks_data.append(art_info)
+            
+        if artworks_data:
+            data.append({
+                'id': src.id,
+                'name': src.source,
+                'type': src.type,
+                'link': src.link,
+                'artworks': artworks_data,
+                'artwork_count': len(artworks_data)
+            })
+            
+    return JsonResponse({'results': data})

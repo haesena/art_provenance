@@ -99,6 +99,7 @@ const EventReport: React.FC = () => {
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-32">Auction</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-32">Exhibition</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-24">Certainty</th>
+                                <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-48">Sources</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -115,6 +116,7 @@ const EventReport: React.FC = () => {
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-700 border-x border-gray-100 truncate" title={event.auction || ''}>{event.auction || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-700 border-x border-gray-100 truncate" title={event.exhibition || ''}>{event.exhibition || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.certainty || ''}>{event.certainty || '-'}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.sources || ''}>{event.sources || '-'}</td>
                                 </tr>
                             ))}
                         </tbody>

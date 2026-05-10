@@ -9,8 +9,9 @@ import Login from './pages/Login';
 import InstitutionReport from './pages/InstitutionReport';
 import AuctionReport from './pages/AuctionReport';
 import ExhibitionReport from './pages/ExhibitionReport';
+import SourceReport from './pages/SourceReport';
 import EventReport from './pages/EventReport';
-import { Landmark, Gavel, BookOpen as BookIcon, Table } from 'lucide-react';
+import { Landmark, Gavel, BookOpen as BookIcon, Table, FileText } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -86,7 +87,18 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </Link>
-              
+              <Link to="/analysis/sources" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-pink-50 rounded-xl text-pink-600 group-hover:bg-pink-600 group-hover:text-white transition-colors">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Sources</h3>
+                    <p className="text-sm text-gray-500">Artworks grouped by source.</p>
+                  </div>
+                </div>
+              </Link>
+
               <Link to="/analysis/events" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-purple-50 rounded-xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
@@ -103,6 +115,7 @@ const App: React.FC = () => {
           <Route path="analysis/institutions" element={<InstitutionReport />} />
           <Route path="analysis/auctions" element={<AuctionReport />} />
           <Route path="analysis/exhibitions" element={<ExhibitionReport />} />
+          <Route path="analysis/sources" element={<SourceReport />} />
           <Route path="analysis/events" element={<EventReport />} />
         </Route>
       </Routes>

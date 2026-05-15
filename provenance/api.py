@@ -313,6 +313,7 @@ def event_report(request):
     for event in events:
         sources = list(event.provenanceeventsource_set.all())
         base_event_data = {
+            'event_id': event.id,
             'artwork_id': event.artwork.id,
             'artwork_name': event.artwork.name,
             'sequence_number': event.sequence_number,
@@ -329,12 +330,14 @@ def event_report(request):
         if not sources:
             base_event_data['id'] = f"{event.id}_0"
             base_event_data['sources'] = ''
+            base_event_data['source_notes'] = ''
             data.append(base_event_data)
         else:
             for s in sources:
                 event_copy = base_event_data.copy()
                 event_copy['id'] = f"{event.id}_{s.id}"
                 event_copy['sources'] = str(s.source)
+                event_copy['source_notes'] = s.notes or ''
                 data.append(event_copy)
         
     return JsonResponse({'results': data})
@@ -355,14 +358,15 @@ def export_event_report_excel(request):
     ws.title = "Event Report"
 
     headers = [
-        'Art ID', 'Artwork Name', 'Sequence #', 'Type ID', 'Event Type',
-        'Date', 'Person', 'Institution', 'Auction', 'Exhibition', 'Certainty', 'Sources'
+        'Event ID', 'Art ID', 'Artwork Name', 'Sequence #', 'Type ID', 'Event Type',
+        'Date', 'Person', 'Institution', 'Auction', 'Exhibition', 'Certainty', 'Sources', 'Source Notes'
     ]
     ws.append(headers)
 
     for event in events:
         sources = list(event.provenanceeventsource_set.all())
         base_row = [
+            event.id,
             event.artwork.id,
             event.artwork.name,
             event.sequence_number,
@@ -377,10 +381,10 @@ def export_event_report_excel(request):
         ]
         
         if not sources:
-            ws.append(base_row + [''])
+            ws.append(base_row + ['', ''])
         else:
             for s in sources:
-                ws.append(base_row + [str(s.source)])
+                ws.append(base_row + [str(s.source), s.notes or ''])
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="event_report.xlsx"'

@@ -32,7 +32,8 @@ const EventReport: React.FC = () => {
             (event.person && event.person.toLowerCase().includes(searchLower)) ||
             (event.institution && event.institution.toLowerCase().includes(searchLower)) ||
             (event.auction && event.auction.toLowerCase().includes(searchLower)) ||
-            (event.exhibition && event.exhibition.toLowerCase().includes(searchLower))
+            (event.exhibition && event.exhibition.toLowerCase().includes(searchLower)) ||
+            (event.source_notes && event.source_notes.toLowerCase().includes(searchLower))
         );
     });
 
@@ -88,6 +89,7 @@ const EventReport: React.FC = () => {
                     <table className="min-w-full divide-y divide-gray-200 border-collapse table-fixed">
                         <thead className="bg-gray-50 uppercase text-[10px] text-gray-500 sticky top-0 z-10 shadow-sm">
                             <tr>
+                                <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-20">Event ID</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-20">Art ID</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-48">Artwork Name</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-16">Seq #</th>
@@ -100,11 +102,13 @@ const EventReport: React.FC = () => {
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-32">Exhibition</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-24">Certainty</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-48">Sources</th>
+                                <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-64">Source Notes</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredEvents.map((event) => (
                                 <tr key={event.id} className="hover:bg-indigo-50/50 transition-colors odd:bg-gray-50/30">
+                                    <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate">{event.event_id}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate">{event.artwork_id}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-900 font-medium border-x border-gray-100 truncate" title={event.artwork_name}>{event.artwork_name}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate">{event.sequence_number}</td>
@@ -117,6 +121,7 @@ const EventReport: React.FC = () => {
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-700 border-x border-gray-100 truncate" title={event.exhibition || ''}>{event.exhibition || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.certainty || ''}>{event.certainty || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.sources || ''}>{event.sources || '-'}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.source_notes || ''}>{event.source_notes || '-'}</td>
                                 </tr>
                             ))}
                         </tbody>

@@ -235,6 +235,7 @@ export const fetchCsrfToken = async () => {
 
 export interface EventReportRow {
   id: string | number;
+  event_id: number;
   artwork_id: number;
   artwork_name: string;
   sequence_number: number;
@@ -247,6 +248,7 @@ export interface EventReportRow {
   exhibition: string;
   certainty: string;
   sources: string;
+  source_notes: string;
 }
 
 export const getEventReport = async () => {

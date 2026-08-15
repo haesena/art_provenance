@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from .models import Artwork, ProvenanceEvent, Person, ArtType, Medium
+from .models import Artwork, ProvenanceEvent, Person, ArtType, Medium, Institution, Interaction, InteractionSource, Source
 
 from django.db.models import Count
 
@@ -325,6 +325,7 @@ def event_report(request):
             'auction': str(event.auction) if event.auction else '',
             'exhibition': str(event.exhibition) if event.exhibition else '',
             'certainty': event.get_certainty_display() if event.certainty else '',
+            'notes': event.notes or '',
         }
         
         if not sources:
@@ -359,7 +360,7 @@ def export_event_report_excel(request):
 
     headers = [
         'Event ID', 'Art ID', 'Artwork Name', 'Sequence #', 'Type ID', 'Event Type',
-        'Date', 'Person', 'Institution', 'Auction', 'Exhibition', 'Certainty', 'Sources', 'Source Notes'
+        'Date', 'Person', 'Institution', 'Auction', 'Exhibition', 'Certainty', 'Notes', 'Sources', 'Source Notes'
     ]
     ws.append(headers)
 
@@ -378,6 +379,7 @@ def export_event_report_excel(request):
             str(event.auction) if event.auction else '',
             str(event.exhibition) if event.exhibition else '',
             event.get_certainty_display() if event.certainty else '',
+            event.notes or '',
         ]
         
         if not sources:
@@ -429,3 +431,262 @@ def source_list(request):
             })
             
     return JsonResponse({'results': data})
+
+def unused_sources(request):
+    from .models import Source, ProvenanceEventSource
+    
+    # Sources that have no ProvenanceEventSource links
+    used_source_ids = ProvenanceEventSource.objects.values_list('source_id', flat=True).distinct()
+    unused = Source.objects.exclude(id__in=used_source_ids).order_by('source')
+    
+    data = []
+    for src in unused:
+        data.append({
+            'id': src.id,
+            'name': src.source,
+            'type': src.type,
+            'link': src.link,
+        })
+    
+    return JsonResponse({'results': data})
+
+
+def person_lookup(request):
+    persons = Person.objects.all().order_by('family_name', 'first_name')
+    data = []
+    for p in persons:
+        data.append({
+            'id': p.id,
+            'name': f"{p.family_name}, {p.first_name}".strip(", "),
+        })
+    return JsonResponse({'results': data})
+
+
+def institution_lookup(request):
+    institutions = Institution.objects.all().order_by('name')
+    data = []
+    for inst in institutions:
+        data.append({
+            'id': inst.id,
+            'name': inst.name,
+            'place': inst.place,
+        })
+    return JsonResponse({'results': data})
+
+
+def source_lookup(request):
+    sources = Source.objects.all().order_by('source')
+    data = []
+    for s in sources:
+        data.append({
+            'id': s.id,
+            'name': s.source,
+        })
+    return JsonResponse({'results': data})
+
+
+def format_interaction(interaction):
+    if interaction.entity1_person:
+        entity1 = {
+            'type': 'person',
+            'id': interaction.entity1_person.id,
+            'name': str(interaction.entity1_person)
+        }
+    else:
+        entity1 = {
+            'type': 'institution',
+            'id': interaction.entity1_institution.id,
+            'name': str(interaction.entity1_institution)
+        }
+
+    if interaction.entity2_person:
+        entity2 = {
+            'type': 'person',
+            'id': interaction.entity2_person.id,
+            'name': str(interaction.entity2_person)
+        }
+    else:
+        entity2 = {
+            'type': 'institution',
+            'id': interaction.entity2_institution.id,
+            'name': str(interaction.entity2_institution)
+        }
+
+    return {
+        'id': interaction.id,
+        'entity1': entity1,
+        'entity2': entity2,
+        'interaction_type': interaction.interaction_type,
+        'date': interaction.date,
+        'place': interaction.place,
+        'notes': interaction.notes,
+        'sources': [
+            {
+                'source_id': its.source.id,
+                'source_name': str(its.source),
+                'notes': its.notes
+            }
+            for its in interaction.interactionsource_set.all().select_related('source')
+        ]
+    }
+
+
+from django.views.decorators.http import require_http_methods
+import json
+from django.core.exceptions import ValidationError
+from django.db import transaction
+
+
+@require_http_methods(["GET", "POST"])
+def interaction_list_create(request):
+    if request.method == "GET":
+        interactions = Interaction.objects.all().select_related(
+            'entity1_person', 'entity1_institution', 
+            'entity2_person', 'entity2_institution'
+        ).prefetch_related(
+            'interactionsource_set__source'
+        ).order_by('-id')
+        results = [format_interaction(i) for i in interactions]
+        return JsonResponse({'results': results})
+        
+    elif request.method == "POST":
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+            
+        entity1_type = data.get('entity1_type')
+        entity1_id = data.get('entity1_id')
+        entity2_type = data.get('entity2_type')
+        entity2_id = data.get('entity2_id')
+        interaction_type = data.get('interaction_type')
+        date = data.get('date', '')
+        place = data.get('place', '')
+        notes = data.get('notes', '')
+        sources_list = data.get('sources', [])
+        
+        if not entity1_type or not entity1_id or not entity2_type or not entity2_id or not interaction_type:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+            
+        if interaction_type not in ['long term', 'singular']:
+            return JsonResponse({'error': 'Invalid interaction type'}, status=400)
+            
+        try:
+            with transaction.atomic():
+                interaction = Interaction(
+                    interaction_type=interaction_type,
+                    date=date,
+                    place=place,
+                    notes=notes
+                )
+                
+                if entity1_type == 'person':
+                    interaction.entity1_person_id = entity1_id
+                elif entity1_type == 'institution':
+                    interaction.entity1_institution_id = entity1_id
+                else:
+                    raise ValidationError("Invalid entity1 type")
+                    
+                if entity2_type == 'person':
+                    interaction.entity2_person_id = entity2_id
+                elif entity2_type == 'institution':
+                    interaction.entity2_institution_id = entity2_id
+                else:
+                    raise ValidationError("Invalid entity2 type")
+                    
+                interaction.full_clean()
+                interaction.save()
+                
+                for src_data in sources_list:
+                    source_id = src_data.get('source_id')
+                    src_notes = src_data.get('notes', '')
+                    if source_id:
+                        InteractionSource.objects.create(
+                            interaction=interaction,
+                            source_id=source_id,
+                            notes=src_notes
+                        )
+        except ValidationError as e:
+            return JsonResponse({'error': e.message_dict if hasattr(e, 'message_dict') else str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+            
+        return JsonResponse(format_interaction(interaction), status=201)
+
+
+@require_http_methods(["PUT", "DELETE"])
+def interaction_detail_update_delete(request, pk):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+        
+    interaction = get_object_or_404(Interaction, pk=pk)
+    
+    if request.method == "DELETE":
+        interaction.delete()
+        return JsonResponse({'detail': 'Deleted successfully'}, status=200)
+        
+    elif request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+            
+        entity1_type = data.get('entity1_type')
+        entity1_id = data.get('entity1_id')
+        entity2_type = data.get('entity2_type')
+        entity2_id = data.get('entity2_id')
+        interaction_type = data.get('interaction_type')
+        date = data.get('date', '')
+        place = data.get('place', '')
+        notes = data.get('notes', '')
+        sources_list = data.get('sources', [])
+        
+        if not entity1_type or not entity1_id or not entity2_type or not entity2_id or not interaction_type:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+            
+        if interaction_type not in ['long term', 'singular']:
+            return JsonResponse({'error': 'Invalid interaction type'}, status=400)
+            
+        try:
+            with transaction.atomic():
+                interaction.interaction_type = interaction_type
+                interaction.date = date
+                interaction.place = place
+                interaction.notes = notes
+                
+                interaction.entity1_person = None
+                interaction.entity1_institution = None
+                if entity1_type == 'person':
+                    interaction.entity1_person_id = entity1_id
+                elif entity1_type == 'institution':
+                    interaction.entity1_institution_id = entity1_id
+                    
+                interaction.entity2_person = None
+                interaction.entity2_institution = None
+                if entity2_type == 'person':
+                    interaction.entity2_person_id = entity2_id
+                elif entity2_type == 'institution':
+                    interaction.entity2_institution_id = entity2_id
+                    
+                interaction.full_clean()
+                interaction.save()
+                
+                interaction.interactionsource_set.all().delete()
+                for src_data in sources_list:
+                    source_id = src_data.get('source_id')
+                    src_notes = src_data.get('notes', '')
+                    if source_id:
+                        InteractionSource.objects.create(
+                            interaction=interaction,
+                            source_id=source_id,
+                            notes=src_notes
+                        )
+        except ValidationError as e:
+            return JsonResponse({'error': e.message_dict if hasattr(e, 'message_dict') else str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+            
+        return JsonResponse(format_interaction(interaction))
+

@@ -210,6 +210,18 @@ export const getSourcesReport = async () => {
   return response.data;
 };
 
+export interface UnusedSource {
+  id: number;
+  name: string;
+  type: string;
+  link: string | null;
+}
+
+export const getUnusedSources = async () => {
+  const response = await api.get<{ results: UnusedSource[] }>('/sources/unused/');
+  return response.data;
+};
+
 export const getPersonDetail = async (id: number) => {
   const response = await api.get<PersonDetail>(`/persons/${id}/`);
   return response.data;
@@ -247,6 +259,7 @@ export interface EventReportRow {
   auction: string;
   exhibition: string;
   certainty: string;
+  notes: string;
   sources: string;
   source_notes: string;
 }
@@ -255,3 +268,81 @@ export const getEventReport = async () => {
   const response = await api.get<{ results: EventReportRow[] }>('/events/report/');
   return response.data;
 };
+
+export interface InteractionEntity {
+  type: 'person' | 'institution';
+  id: number;
+  name: string;
+}
+
+export interface InteractionSourceItem {
+  source_id: number;
+  source_name: string;
+  notes?: string;
+}
+
+export interface Interaction {
+  id: number;
+  entity1: InteractionEntity;
+  entity2: InteractionEntity;
+  interaction_type: 'long term' | 'singular';
+  date: string;
+  place: string;
+  notes: string;
+  sources: InteractionSourceItem[];
+}
+
+export interface InteractionPayload {
+  entity1_type: 'person' | 'institution';
+  entity1_id: number;
+  entity2_type: 'person' | 'institution';
+  entity2_id: number;
+  interaction_type: 'long term' | 'singular';
+  date: string;
+  place: string;
+  notes: string;
+  sources: { source_id: number; notes?: string }[];
+}
+
+export interface LookupItem {
+  id: number;
+  name: string;
+  place?: string;
+}
+
+export const getInteractions = async () => {
+  const response = await api.get<{ results: Interaction[] }>('/interactions/');
+  return response.data;
+};
+
+export const createInteraction = async (payload: InteractionPayload) => {
+  const response = await api.post<Interaction>('/interactions/', payload);
+  return response.data;
+};
+
+export const updateInteraction = async (id: number, payload: InteractionPayload) => {
+  const response = await api.put<Interaction>(`/interactions/${id}/`, payload);
+  return response.data;
+};
+
+export const deleteInteraction = async (id: number) => {
+  const response = await api.delete(`/interactions/${id}/`);
+  return response.data;
+};
+
+export const getPersonLookup = async () => {
+  const response = await api.get<{ results: LookupItem[] }>('/persons/lookup/');
+  return response.data;
+};
+
+export const getInstitutionLookup = async () => {
+  const response = await api.get<{ results: LookupItem[] }>('/institutions/lookup/');
+  return response.data;
+};
+
+export const getSourceLookup = async () => {
+  const response = await api.get<{ results: LookupItem[] }>('/sources/lookup/');
+  return response.data;
+};
+
+

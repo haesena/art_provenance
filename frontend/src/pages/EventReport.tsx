@@ -2,6 +2,32 @@ import React, { useEffect, useState } from 'react';
 import { getEventReport, EventReportRow } from '../services/api';
 import { Table, Search, AlertCircle, Download } from 'lucide-react';
 
+const getEventTypeStyle = (type: string) => {
+    const t = type.toLowerCase().trim();
+    switch (t) {
+        case 'creation':
+            return { backgroundColor: '#0f172a', color: '#f8fafc', borderColor: '#334155' };
+        case 'acquisition':
+            return { backgroundColor: '#fef2f2', color: '#991b1b', borderColor: '#fecaca' };
+        case 'mentioned':
+            return { backgroundColor: '#faf5ff', color: '#6b21a8', borderColor: '#e9d5ff' };
+        case 'exhibited':
+            return { backgroundColor: '#f0fdf4', color: '#166534', borderColor: '#bbf7d0' };
+        case 'sale':
+            return { backgroundColor: '#eff6ff', color: '#1e40af', borderColor: '#bfdbfe' };
+        case 'donation':
+            return { backgroundColor: '#fefce8', color: '#854d0e', borderColor: '#fef08a' };
+        case 'loan':
+            return { backgroundColor: '#fdf2f8', color: '#9d174d', borderColor: '#fbcfe8' };
+        case 'inheritance':
+            return { backgroundColor: '#fff7ed', color: '#c2410c', borderColor: '#ffedd5' };
+        case 'commission':
+            return { backgroundColor: '#faf5f0', color: '#7c2d12', borderColor: '#f3e3d3' };
+        default:
+            return { backgroundColor: '#f8fafc', color: '#475569', borderColor: '#e2e8f0' };
+    }
+};
+
 const EventReport: React.FC = () => {
     const [events, setEvents] = useState<EventReportRow[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,6 +59,7 @@ const EventReport: React.FC = () => {
             (event.institution && event.institution.toLowerCase().includes(searchLower)) ||
             (event.auction && event.auction.toLowerCase().includes(searchLower)) ||
             (event.exhibition && event.exhibition.toLowerCase().includes(searchLower)) ||
+            (event.notes && event.notes.toLowerCase().includes(searchLower)) ||
             (event.source_notes && event.source_notes.toLowerCase().includes(searchLower))
         );
     });
@@ -101,6 +128,7 @@ const EventReport: React.FC = () => {
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-32">Auction</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-32">Exhibition</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-24">Certainty</th>
+                                <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-64">Notes</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-48">Sources</th>
                                 <th scope="col" className="px-3 py-3 font-medium whitespace-nowrap text-left border-x border-gray-200 w-64">Source Notes</th>
                             </tr>
@@ -113,13 +141,22 @@ const EventReport: React.FC = () => {
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-900 font-medium border-x border-gray-100 truncate" title={event.artwork_name}>{event.artwork_name}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate">{event.sequence_number}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate">{event.event_type_id}</td>
-                                    <td className="px-3 py-2 whitespace-nowrap text-indigo-600 font-medium border-x border-gray-100 truncate" title={event.event_type_name}>{event.event_type_name}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap border-x border-gray-100 truncate">
+                                        <span 
+                                            className="px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider border"
+                                            style={getEventTypeStyle(event.event_type_name)}
+                                        >
+                                            {event.event_type_name}
+                                        </span>
+                                    </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.date || ''}>{event.date || '-'}</td>
+
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-700 border-x border-gray-100 truncate" title={event.person || ''}>{event.person || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-700 border-x border-gray-100 truncate" title={event.institution || ''}>{event.institution || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-700 border-x border-gray-100 truncate" title={event.auction || ''}>{event.auction || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-700 border-x border-gray-100 truncate" title={event.exhibition || ''}>{event.exhibition || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.certainty || ''}>{event.certainty || '-'}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.notes || ''}>{event.notes || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.sources || ''}>{event.sources || '-'}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500 border-x border-gray-100 truncate" title={event.source_notes || ''}>{event.source_notes || '-'}</td>
                                 </tr>

@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from .models import Source, Artwork, ProvenanceEvent, Institution, Auction, Exhibition, EventType, ArtType, Medium
+from .models import Source, Artwork, ProvenanceEvent, Institution, Auction, Exhibition, EventType, ArtType, Medium, Person, Interaction
 
 class SourceModelTest(TestCase):
     def test_source_str_truncation(self):
@@ -117,3 +117,98 @@ class EventSourceNotesTest(TestCase):
         
         pes2 = ProvenanceEventSource.objects.get(event=self.event, source=self.source2)
         self.assertEqual(pes2.notes, notes2)
+
+
+class InteractionExclusivityTest(TestCase):
+    def setUp(self):
+        self.person1 = Person.objects.create(family_name="Smith", first_name="John")
+        self.person2 = Person.objects.create(family_name="Doe", first_name="Jane")
+        self.institution1 = Institution.objects.create(name="Louvre Museum")
+        self.institution2 = Institution.objects.create(name="Metropolitan Museum")
+
+    def test_valid_person_to_person_success(self):
+        interaction = Interaction(
+            entity1_person=self.person1,
+            entity2_person=self.person2,
+            interaction_type="singular",
+            date="1950",
+            place="Paris"
+        )
+        interaction.full_clean()
+        interaction.save()
+        self.assertEqual(Interaction.objects.count(), 1)
+
+    def test_valid_person_to_institution_success(self):
+        interaction = Interaction(
+            entity1_person=self.person1,
+            entity2_institution=self.institution1,
+            interaction_type="long term",
+            date="1940-1945",
+            place="London"
+        )
+        interaction.full_clean()
+        interaction.save()
+        self.assertEqual(Interaction.objects.count(), 1)
+
+    def test_invalid_entity1_both_person_and_institution_fails(self):
+        interaction = Interaction(
+            entity1_person=self.person1,
+            entity1_institution=self.institution1,
+            entity2_person=self.person2,
+            interaction_type="singular"
+        )
+        with self.assertRaises(ValidationError) as cm:
+            interaction.full_clean()
+        self.assertIn("Entity 1 must be either a Person or an Institution, not both or neither.", str(cm.exception))
+
+    def test_invalid_entity1_neither_person_nor_institution_fails(self):
+        interaction = Interaction(
+            entity2_person=self.person2,
+            interaction_type="singular"
+        )
+        with self.assertRaises(ValidationError) as cm:
+            interaction.full_clean()
+        self.assertIn("Entity 1 must be either a Person or an Institution, not both or neither.", str(cm.exception))
+
+    def test_invalid_entity2_both_person_and_institution_fails(self):
+        interaction = Interaction(
+            entity1_person=self.person1,
+            entity2_person=self.person2,
+            entity2_institution=self.institution2,
+            interaction_type="singular"
+        )
+        with self.assertRaises(ValidationError) as cm:
+            interaction.full_clean()
+        self.assertIn("Entity 2 must be either a Person or an Institution, not both or neither.", str(cm.exception))
+
+    def test_invalid_entity2_neither_person_nor_institution_fails(self):
+        interaction = Interaction(
+            entity1_person=self.person1,
+            interaction_type="singular"
+        )
+        with self.assertRaises(ValidationError) as cm:
+            interaction.full_clean()
+        self.assertIn("Entity 2 must be either a Person or an Institution, not both or neither.", str(cm.exception))
+
+    def test_interaction_notes_and_sources_success(self):
+        interaction = Interaction.objects.create(
+            entity1_person=self.person1,
+            entity2_institution=self.institution1,
+            interaction_type="long term",
+            notes="General notes about relationship"
+        )
+        source1 = Source.objects.create(source="Test Source A")
+        source2 = Source.objects.create(source="Test Source B")
+        
+        from .models import InteractionSource
+        InteractionSource.objects.create(interaction=interaction, source=source1, notes="Source A specific note")
+        InteractionSource.objects.create(interaction=interaction, source=source2, notes="Source B specific note")
+        
+        interaction.refresh_from_db()
+        self.assertEqual(interaction.notes, "General notes about relationship")
+        self.assertEqual(interaction.sources.count(), 2)
+        
+        its1 = InteractionSource.objects.get(interaction=interaction, source=source1)
+        self.assertEqual(its1.notes, "Source A specific note")
+
+

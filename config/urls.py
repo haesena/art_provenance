@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/auctions/', api.auction_list, name='auction-list'),
     path('api/exhibitions/', api.exhibition_list, name='exhibition-list'),
     path('api/sources/', api.source_list, name='source-list'),
+    path('api/sources/unused/', api.unused_sources, name='unused-sources'),
     path('api/events/report/', api.event_report, name='event-report'),
     path('api/events/report/export/', api.export_event_report_excel, name='export-event-report'),
     
@@ -45,6 +46,13 @@ urlpatterns = [
     path('api/auth/login/', auth_api.api_login),
     path('api/auth/logout/', auth_api.api_logout),
     path('api/auth/me/', auth_api.api_me),
+
+    # Interactions API
+    path('api/interactions/', api.interaction_list_create),
+    path('api/interactions/<int:pk>/', api.interaction_detail_update_delete),
+    path('api/persons/lookup/', api.person_lookup),
+    path('api/institutions/lookup/', api.institution_lookup),
+    path('api/sources/lookup/', api.source_lookup),
 ]
 
 if settings.DEBUG:

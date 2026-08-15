@@ -193,3 +193,48 @@ class Exhibition(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Interaction(models.Model):
+    INTERACTION_TYPES = [
+        ('long term', 'Long Term'),
+        ('singular', 'Singular'),
+    ]
+
+    entity1_person = models.ForeignKey(Person, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions_as_entity1')
+    entity1_institution = models.ForeignKey(Institution, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions_as_entity1')
+
+    entity2_person = models.ForeignKey(Person, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions_as_entity2')
+    entity2_institution = models.ForeignKey(Institution, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions_as_entity2')
+
+    interaction_type = models.CharField(max_length=20, choices=INTERACTION_TYPES)
+    date = models.CharField(max_length=100, blank=True)
+    place = models.CharField(max_length=255, blank=True)
+    
+    notes = models.TextField(blank=True)
+    sources = models.ManyToManyField(Source, through='InteractionSource', related_name='interactions')
+
+    def clean(self):
+        super().clean()
+        if (self.entity1_person is None) == (self.entity1_institution is None):
+            raise ValidationError("Entity 1 must be either a Person or an Institution, not both or neither.")
+        if (self.entity2_person is None) == (self.entity2_institution is None):
+            raise ValidationError("Entity 2 must be either a Person or an Institution, not both or neither.")
+
+    def __str__(self):
+        e1 = self.entity1_person or self.entity1_institution
+        e2 = self.entity2_person or self.entity2_institution
+        return f"Interaction ({self.interaction_type}) between {e1} and {e2}"
+
+
+class InteractionSource(models.Model):
+    interaction = models.ForeignKey(Interaction, on_delete=models.CASCADE)
+    source = models.ForeignKey(Source, on_delete=models.CASCADE)
+    notes = models.CharField(max_length=150, blank=True)
+
+    def __str__(self):
+        return f"{self.source} for {self.interaction}"
+
+
+
+

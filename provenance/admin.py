@@ -7,7 +7,7 @@ from .models import (
     Person, Institution, InstitutionType, ArtType, Artwork,
     ArtworkGroup, Source, ProvenanceEvent, ArtworkRelationship,
     Image, Medium, Auction, AuctionPerson, Exhibition, EventType,
-    ProvenanceEventSource
+    ProvenanceEventSource, Interaction, InteractionSource
 )
 
 class ImageInline(GenericTabularInline):
@@ -188,3 +188,21 @@ class ArtworkRelationshipAdmin(admin.ModelAdmin):
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
     pass
+
+class InteractionSourceInline(admin.StackedInline):
+    model = InteractionSource
+    extra = 1
+    formfield_overrides = {
+        models.CharField: {'widget': TextInput(attrs={'size': '100'})},
+    }
+
+@admin.register(Interaction)
+class InteractionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'entity1_person', 'entity1_institution', 'entity2_person', 'entity2_institution', 'interaction_type', 'date', 'place', 'notes')
+    list_filter = ('interaction_type', 'place')
+    inlines = [InteractionSourceInline]
+    search_fields = ('entity1_person__family_name', 'entity1_person__first_name', 'entity1_institution__name', 'entity2_person__family_name', 'entity2_person__first_name', 'entity2_institution__name', 'place', 'notes')
+
+
+
+

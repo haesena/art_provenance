@@ -8,25 +8,68 @@ import {
     BookOpen,
     Gavel,
     Building2,
-    Image as ImageIcon,
     User as UserIcon,
     ArrowRightLeft,
     Calendar,
     MapPin,
-    Info
+    Info,
+    Paintbrush,
+    ShoppingBag,
+    MessageSquare,
+    Eye,
+    Gift,
+    FileSignature
 } from 'lucide-react';
 
 import { getDeterministicColor } from '../utils/colorUtils';
 
 const getEventIcon = (type: string) => {
-    const t = type.toLowerCase();
+    const t = type.toLowerCase().trim();
+    if (t === 'creation') return <Paintbrush className="w-4 h-4" />;
+    if (t === 'acquisition') return <ShoppingBag className="w-4 h-4" />;
+    if (t === 'sale') return <Gavel className="w-4 h-4" />;
+    if (t === 'exhibited') return <Eye className="w-4 h-4" />;
+    if (t === 'mentioned') return <MessageSquare className="w-4 h-4" />;
+    if (t === 'inheritance') return <ArrowRightLeft className="w-4 h-4" />;
+    if (t === 'loan') return <Calendar className="w-4 h-4" />;
+    if (t === 'donation') return <Gift className="w-4 h-4" />;
+    if (t === 'commission') return <FileSignature className="w-4 h-4" />;
+    
+    // Fallbacks
     if (t.includes('auction') || t.includes('sale')) return <Gavel className="w-4 h-4" />;
-    if (t.includes('exhibition') || t.includes('loan')) return <ImageIcon className="w-4 h-4" />;
+    if (t.includes('exhibition') || t.includes('loan')) return <Eye className="w-4 h-4" />;
     if (t.includes('museum') || t.includes('institution') || t.includes('gallery')) return <Building2 className="w-4 h-4" />;
     if (t.includes('theft') || t.includes('confiscation') || t.includes('looting')) return <Info className="w-4 h-4 text-red-500" />;
     if (t.includes('transfer') || t.includes('inheritance')) return <ArrowRightLeft className="w-4 h-4" />;
     if (t.includes('person') || t.includes('owner') || t.includes('collection')) return <UserIcon className="w-4 h-4" />;
     return <Anchor className="w-4 h-4" />;
+};
+
+
+const getEventTypeStyle = (type: string) => {
+    const t = type.toLowerCase().trim();
+    switch (t) {
+        case 'creation':
+            return { backgroundColor: '#0f172a', color: '#f8fafc', borderColor: '#334155' };
+        case 'acquisition':
+            return { backgroundColor: '#fef2f2', color: '#991b1b', borderColor: '#fecaca' };
+        case 'mentioned':
+            return { backgroundColor: '#faf5ff', color: '#6b21a8', borderColor: '#e9d5ff' };
+        case 'exhibited':
+            return { backgroundColor: '#f0fdf4', color: '#166534', borderColor: '#bbf7d0' };
+        case 'sale':
+            return { backgroundColor: '#eff6ff', color: '#1e40af', borderColor: '#bfdbfe' };
+        case 'donation':
+            return { backgroundColor: '#fefce8', color: '#854d0e', borderColor: '#fef08a' };
+        case 'loan':
+            return { backgroundColor: '#fdf2f8', color: '#9d174d', borderColor: '#fbcfe8' };
+        case 'inheritance':
+            return { backgroundColor: '#fff7ed', color: '#c2410c', borderColor: '#ffedd5' };
+        case 'commission':
+            return { backgroundColor: '#faf5f0', color: '#7c2d12', borderColor: '#f3e3d3' };
+        default:
+            return { backgroundColor: '#f8fafc', color: '#475569', borderColor: '#e2e8f0' };
+    }
 };
 
 const ArtworkDetail: React.FC = () => {
@@ -120,21 +163,32 @@ const ArtworkDetail: React.FC = () => {
                     <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-indigo-100"></div>
 
                     <div className="space-y-10">
-                        {artwork.provenance?.map((event: ProvenanceEvent) => (
-                            <div key={event.id} className="relative pl-16 group">
-                                {/* Icon Circle */}
-                                <div className="absolute left-0 top-0 w-12 h-12 rounded-full bg-white border-2 border-indigo-200 flex items-center justify-center z-10 shadow-sm group-hover:border-indigo-500 transition-colors">
-                                    <div className="text-indigo-600">
-                                        {getEventIcon(event.type)}
+                        {artwork.provenance?.map((event: ProvenanceEvent) => {
+                            const eventStyle = getEventTypeStyle(event.type);
+                            return (
+                                <div key={event.id} className="relative pl-16 group">
+                                    {/* Icon Circle */}
+                                    <div 
+                                        className="absolute left-0 top-0 w-12 h-12 rounded-full bg-white border-2 flex items-center justify-center z-10 shadow-sm transition-colors"
+                                        style={{ borderColor: eventStyle.borderColor, backgroundColor: eventStyle.backgroundColor + '10' }}
+                                    >
+                                        <div style={{ color: eventStyle.color }}>
+                                            {getEventIcon(event.type)}
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Content Card */}
-                                <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                                    {/* Content Card */}
+                                    <div 
+                                        className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200"
+                                        style={{ borderLeft: `4px solid ${eventStyle.color}` }}
+                                    >
                                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded uppercase tracking-wider">
+                                                <span 
+                                                    className="px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider border animate-in fade-in duration-300"
+                                                    style={getEventTypeStyle(event.type)}
+                                                >
                                                     {event.type}
                                                 </span>
                                                 {event.certainty && (
@@ -213,7 +267,8 @@ const ArtworkDetail: React.FC = () => {
                                     )}
                                 </div>
                             </div>
-                        ))}
+                        );
+                        })}
                         {(!artwork.provenance || artwork.provenance.length === 0) && (
                             <div className="pl-16 py-12 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                                 <p className="text-gray-500 font-medium">No provenance records found for this artwork.</p>

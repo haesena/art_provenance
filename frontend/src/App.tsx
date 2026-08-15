@@ -10,8 +10,10 @@ import InstitutionReport from './pages/InstitutionReport';
 import AuctionReport from './pages/AuctionReport';
 import ExhibitionReport from './pages/ExhibitionReport';
 import SourceReport from './pages/SourceReport';
+import UnusedSourcesReport from './pages/UnusedSourcesReport';
 import EventReport from './pages/EventReport';
-import { Landmark, Gavel, BookOpen as BookIcon, Table, FileText } from 'lucide-react';
+import Interactions from './pages/Interactions';
+import { Landmark, Gavel, BookOpen as BookIcon, Table, FileText, FileX, ArrowLeftRight } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -110,6 +112,29 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </Link>
+              <Link to="/analysis/unused-sources" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-orange-50 rounded-xl text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                    <FileX className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Unused Sources</h3>
+                    <p className="text-sm text-gray-500">Sources not linked to any event.</p>
+                  </div>
+                </div>
+              </Link>
+
+              <Link to="/analysis/interactions" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    <ArrowLeftRight className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Interactions</h3>
+                    <p className="text-sm text-gray-500">Manage relationships between persons and institutions.</p>
+                  </div>
+                </div>
+              </Link>
             </div>
           } />
           <Route path="analysis/institutions" element={<InstitutionReport />} />
@@ -117,6 +142,8 @@ const App: React.FC = () => {
           <Route path="analysis/exhibitions" element={<ExhibitionReport />} />
           <Route path="analysis/sources" element={<SourceReport />} />
           <Route path="analysis/events" element={<EventReport />} />
+          <Route path="analysis/unused-sources" element={<UnusedSourcesReport />} />
+          <Route path="analysis/interactions" element={<Interactions />} />
         </Route>
       </Routes>
     </AuthProvider>

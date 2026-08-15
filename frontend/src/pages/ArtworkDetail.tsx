@@ -169,8 +169,8 @@ const ArtworkDetail: React.FC = () => {
                                 <div key={event.id} className="relative pl-16 group">
                                     {/* Icon Circle */}
                                     <div 
-                                        className="absolute left-0 top-0 w-12 h-12 rounded-full bg-white border-2 flex items-center justify-center z-10 shadow-sm transition-colors"
-                                        style={{ borderColor: eventStyle.borderColor, backgroundColor: eventStyle.backgroundColor + '10' }}
+                                        className="absolute left-0 top-0 w-12 h-12 rounded-full border-2 flex items-center justify-center z-10 shadow-sm transition-colors"
+                                        style={{ borderColor: eventStyle.borderColor, backgroundColor: eventStyle.backgroundColor }}
                                     >
                                         <div style={{ color: eventStyle.color }}>
                                             {getEventIcon(event.type)}

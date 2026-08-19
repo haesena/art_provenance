@@ -143,6 +143,9 @@ const PersonList: React.FC = () => {
                                         <span className="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md font-medium">
                                             {person.event_count || 0} {person.event_count === 1 ? 'Event' : 'Events'}
                                         </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded-md font-medium">
+                                            {person.interaction_count || 0} {person.interaction_count === 1 ? 'Interaction' : 'Interactions'}
+                                        </span>
                                     </div>
                                 </div>
                             </div>

@@ -120,7 +120,8 @@ def person_list(request):
     from django.db.models import Count
     persons = Person.objects.prefetch_related('images').annotate(
         event_count=Count('provenance_events', distinct=True),
-        artwork_count=Count('provenance_events__artwork', distinct=True)
+        artwork_count=Count('provenance_events__artwork', distinct=True),
+        interaction_count=Count('interactions_as_entity1', distinct=True) + Count('interactions_as_entity2', distinct=True)
     ).order_by('family_name', 'first_name')
     
     event_type = request.GET.get('event_type')
@@ -137,6 +138,7 @@ def person_list(request):
             'death_date': person.death_date,
             'event_count': person.event_count,
             'artwork_count': person.artwork_count,
+            'interaction_count': person.interaction_count,
             'image': person.images.first().image.url if person.images.exists() else None,
         })
     return JsonResponse({'results': data})
@@ -154,6 +156,18 @@ def person_detail(request, pk):
     events = []
     for event in person.provenance_events.all().select_related('artwork'):
         events.append(format_provenance_event(event))
+    events.sort(key=lambda e: (e['artwork_name'].lower(), e['sequence']))
+
+    from django.db.models import Q
+    from .models import Interaction
+    person_interactions = Interaction.objects.filter(
+        Q(entity1_person=person) | Q(entity2_person=person)
+    ).select_related(
+        'entity1_person', 'entity1_institution',
+        'entity2_person', 'entity2_institution'
+    ).prefetch_related('interactionsource_set__source')
+    
+    interactions = [format_interaction(i) for i in person_interactions]
         
     data = {
         'id': person.id,
@@ -164,6 +178,7 @@ def person_detail(request, pk):
         'biography': person.biography,
         'image': person.images.first().image.url if person.images.exists() else None,
         'events': events,
+        'interactions': interactions,
     }
     return JsonResponse(data)
 
@@ -205,14 +220,27 @@ def institution_list(request):
         for art_id, art_info in artwork_map.items():
             art_info['event_types'] = sorted(list(art_info['event_types']))
             artworks_data.append(art_info)
+
+        from django.db.models import Q
+        from .models import Interaction
+        interactions_qs = Interaction.objects.filter(
+            Q(entity1_institution=inst) | Q(entity2_institution=inst)
+        ).select_related(
+            'entity1_person', 'entity1_institution',
+            'entity2_person', 'entity2_institution'
+        ).prefetch_related('interactionsource_set__source')
         
-        if artworks_data:
+        interactions_data = [format_interaction(i) for i in interactions_qs]
+        
+        if artworks_data or interactions_data:
             data.append({
                 'id': inst.id,
                 'name': inst.name,
                 'place': inst.place,
                 'artworks': artworks_data,
-                'artwork_count': len(artworks_data)
+                'artwork_count': len(artworks_data),
+                'interactions': interactions_data,
+                'interaction_count': len(interactions_data)
             })
             
     return JsonResponse({'results': data})
@@ -452,7 +480,8 @@ def unused_sources(request):
 
 
 def person_lookup(request):
-    persons = Person.objects.all().order_by('family_name', 'first_name')
+    from django.db.models.functions import Lower
+    persons = Person.objects.all().order_by(Lower('family_name'), Lower('first_name'))
     data = []
     for p in persons:
         data.append({
@@ -463,7 +492,8 @@ def person_lookup(request):
 
 
 def institution_lookup(request):
-    institutions = Institution.objects.all().order_by('name')
+    from django.db.models.functions import Lower
+    institutions = Institution.objects.all().order_by(Lower('name'))
     data = []
     for inst in institutions:
         data.append({
@@ -475,7 +505,8 @@ def institution_lookup(request):
 
 
 def source_lookup(request):
-    sources = Source.objects.all().order_by('source')
+    from django.db.models.functions import Lower
+    sources = Source.objects.all().order_by(Lower('source'))
     data = []
     for s in sources:
         data.append({

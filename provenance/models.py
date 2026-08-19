@@ -51,6 +51,9 @@ class Person(models.Model):
     
     images = GenericRelation(Image)
 
+    class Meta:
+        ordering = ['family_name', 'first_name']
+
     def __str__(self):
         return f"{self.family_name}, {self.first_name}".strip(", ")
 
@@ -67,6 +70,9 @@ class Institution(models.Model):
     start_date = models.CharField(max_length=100, blank=True, null=True)
     end_date = models.CharField(max_length=100, blank=True, null=True)
     notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
         return self.name

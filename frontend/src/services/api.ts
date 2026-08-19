@@ -81,6 +81,7 @@ export interface Person {
   death_date: string | null;
   artwork_count?: number;
   event_count?: number;
+  interaction_count?: number;
   image?: string | null;
 }
 
@@ -100,6 +101,8 @@ export interface Institution {
     image: string | null;
     event_types: string[];
   }[];
+  interaction_count: number;
+  interactions?: Interaction[];
 }
 
 export interface AuctionReport {
@@ -151,6 +154,7 @@ export interface PersonDetail extends Person {
     artwork_id: number;
     artwork_name: string;
   })[];
+  interactions?: Interaction[];
 }
 
 export interface User {

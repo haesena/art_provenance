@@ -21,10 +21,12 @@ const SearchableSelect: React.FC<{
 
   const selectedItem = items.find(item => item.id === selectedId);
 
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(search.toLowerCase()) ||
-    (item.place && item.place.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredItems = items
+    .filter(item => 
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      (item.place && item.place.toLowerCase().includes(search.toLowerCase()))
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="relative space-y-1.5 flex-1 min-w-[200px]">

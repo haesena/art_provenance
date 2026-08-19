@@ -212,3 +212,125 @@ class InteractionExclusivityTest(TestCase):
         self.assertEqual(its1.notes, "Source A specific note")
 
 
+from django.urls import reverse
+
+class PersonDetailAPITest(TestCase):
+    def setUp(self):
+        self.person = Person.objects.create(family_name="Gogh", first_name="Vincent")
+        
+        self.art_type = ArtType.objects.create(name="Painting")
+        self.medium = Medium.objects.create(name="Oil on Canvas", type=self.art_type)
+        
+        # Create artworks with names that sort differently from creation order
+        self.art_b = Artwork.objects.create(name="Bedroom in Arles", medium=self.medium)
+        self.art_a = Artwork.objects.create(name="Almond Blossoms", medium=self.medium)
+        
+        self.event_type = EventType.objects.create(name="Acquisition")
+        
+        # Create events for Almond Blossoms
+        # sequence 2
+        ProvenanceEvent.objects.create(
+            artwork=self.art_a,
+            event_type=self.event_type,
+            sequence_number=2,
+            person=self.person,
+            date="1890"
+        )
+        # sequence 1
+        ProvenanceEvent.objects.create(
+            artwork=self.art_a,
+            event_type=self.event_type,
+            sequence_number=1,
+            person=self.person,
+            date="1889"
+        )
+        
+        # Create events for Bedroom in Arles
+        ProvenanceEvent.objects.create(
+            artwork=self.art_b,
+            event_type=self.event_type,
+            sequence_number=1,
+            person=self.person,
+            date="1888"
+        )
+        
+    def test_events_sorted_by_artwork_and_sequence(self):
+        url = reverse('person-detail', kwargs={'pk': self.person.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.json()
+        events = data['events']
+        self.assertEqual(len(events), 3)
+        
+        # Expected order:
+        # 1. Almond Blossoms (sequence 1)
+        # 2. Almond Blossoms (sequence 2)
+        # 3. Bedroom in Arles (sequence 1)
+        self.assertEqual(events[0]['artwork_name'], "Almond Blossoms")
+        self.assertEqual(events[0]['sequence'], 1)
+        
+        self.assertEqual(events[1]['artwork_name'], "Almond Blossoms")
+        self.assertEqual(events[1]['sequence'], 2)
+        
+        self.assertEqual(events[2]['artwork_name'], "Bedroom in Arles")
+        self.assertEqual(events[2]['sequence'], 1)
+
+
+class InstitutionListAPITest(TestCase):
+    def setUp(self):
+        self.inst = Institution.objects.create(name="Louvre Museum", place="Paris")
+        self.person = Person.objects.create(family_name="Gogh", first_name="Vincent")
+        
+        # Create an interaction with the institution
+        self.interaction = Interaction.objects.create(
+            entity1_person=self.person,
+            entity2_institution=self.inst,
+            interaction_type="singular",
+            date="1889",
+            place="Paris"
+        )
+        
+    def test_institution_list_includes_interactions(self):
+        url = reverse('institution-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.json()
+        results = data['results']
+        self.assertEqual(len(results), 1)
+        
+        inst_data = results[0]
+        self.assertEqual(inst_data['name'], "Louvre Museum")
+        self.assertEqual(inst_data['interactions'][0]['entity2']['name'], "Louvre Museum")
+
+
+class LookupAPITest(TestCase):
+    def setUp(self):
+        Person.objects.create(family_name="de Jong", first_name="Piet")
+        Person.objects.create(family_name="Gogh", first_name="Vincent")
+        Person.objects.create(family_name="Alberts", first_name="Albert")
+        
+        Institution.objects.create(name="metropolitan Museum")
+        Institution.objects.create(name="Louvre Museum")
+        Institution.objects.create(name="Alte Nationalgalerie")
+        
+    def test_lookups_are_case_insensitive_sorted(self):
+        # Person lookup
+        response = self.client.get('/api/persons/lookup/')
+        self.assertEqual(response.status_code, 200)
+        results = response.json()['results']
+        names = [r['name'] for r in results]
+        self.assertEqual(names, ["Alberts, Albert", "de Jong, Piet", "Gogh, Vincent"])
+        
+        # Institution lookup
+        response = self.client.get('/api/institutions/lookup/')
+        self.assertEqual(response.status_code, 200)
+        results = response.json()['results']
+        names = [r['name'] for r in results]
+        self.assertEqual(names, ["Alte Nationalgalerie", "Louvre Museum", "metropolitan Museum"])
+
+
+
+
+

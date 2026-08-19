@@ -36,7 +36,7 @@ class ArtworkGroup(models.Model):
 
 class Medium(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    type = models.ForeignKey(ArtType, on_delete=models.SET_NULL, null=True, blank=True, related_name='mediums')
+    type = models.ForeignKey(ArtType, on_delete=models.PROTECT, null=True, blank=True, related_name='mediums')
     description = models.TextField(blank=True)
 
     def __str__(self):
@@ -65,7 +65,7 @@ class InstitutionType(models.Model):
 
 class Institution(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    type = models.ForeignKey(InstitutionType, on_delete=models.SET_NULL, null=True, blank=True, related_name='institutions')
+    type = models.ForeignKey(InstitutionType, on_delete=models.PROTECT, null=True, blank=True, related_name='institutions')
     place = models.CharField(max_length=255, blank=True)
     start_date = models.CharField(max_length=100, blank=True, null=True)
     end_date = models.CharField(max_length=100, blank=True, null=True)
@@ -80,7 +80,7 @@ class Institution(models.Model):
 class Artwork(models.Model):
     name = models.CharField(max_length=255)
     dimension = models.CharField(max_length=255, blank=True)
-    medium = models.ForeignKey(Medium, on_delete=models.SET_NULL, null=True, blank=True, related_name='artworks')
+    medium = models.ForeignKey(Medium, on_delete=models.PROTECT, null=True, blank=True, related_name='artworks')
     notes = models.TextField(blank=True)
     
     groups = models.ManyToManyField(ArtworkGroup, blank=True, related_name='artworks')
@@ -108,14 +108,14 @@ class ProvenanceEvent(models.Model):
     ]
 
     artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE, related_name='provenance_events')
-    event_type = models.ForeignKey(EventType, on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
+    event_type = models.ForeignKey(EventType, on_delete=models.PROTECT, null=True, blank=True, related_name='provenance_events')
     sequence_number = models.IntegerField(help_text="Order of events.")
     date = models.CharField(max_length=100, blank=True, help_text="Date as input type text")
     
-    person = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
-    institution = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
-    auction = models.ForeignKey('Auction', on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
-    exhibition = models.ForeignKey('Exhibition', on_delete=models.SET_NULL, null=True, blank=True, related_name='provenance_events')
+    person = models.ForeignKey(Person, on_delete=models.PROTECT, null=True, blank=True, related_name='provenance_events')
+    institution = models.ForeignKey(Institution, on_delete=models.PROTECT, null=True, blank=True, related_name='provenance_events')
+    auction = models.ForeignKey('Auction', on_delete=models.PROTECT, null=True, blank=True, related_name='provenance_events')
+    exhibition = models.ForeignKey('Exhibition', on_delete=models.PROTECT, null=True, blank=True, related_name='provenance_events')
     
     certainty = models.CharField(max_length=20, choices=CERTAINTY_CHOICES, blank=True, null=True)
     notes = models.TextField(blank=True)
@@ -139,7 +139,7 @@ class ProvenanceEvent(models.Model):
 
 class ProvenanceEventSource(models.Model):
     event = models.ForeignKey(ProvenanceEvent, on_delete=models.CASCADE)
-    source = models.ForeignKey(Source, on_delete=models.CASCADE)
+    source = models.ForeignKey(Source, on_delete=models.PROTECT)
     notes = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
@@ -154,8 +154,8 @@ class ArtworkRelationship(models.Model):
         ('study_for', 'Study For'),
     ]
 
-    source_artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE, related_name='relationships_from')
-    target_artwork = models.ForeignKey(Artwork, on_delete=models.CASCADE, related_name='relationships_to')
+    source_artwork = models.ForeignKey(Artwork, on_delete=models.PROTECT, related_name='relationships_from')
+    target_artwork = models.ForeignKey(Artwork, on_delete=models.PROTECT, related_name='relationships_to')
     
     type = models.CharField(max_length=50, choices=RELATION_TYPES, default='possible_match')
     reasoning = models.TextField(blank=True)
@@ -166,7 +166,7 @@ class ArtworkRelationship(models.Model):
 class Auction(models.Model):
     name = models.CharField(max_length=255)
     date = models.CharField(max_length=100, blank=True)
-    institution = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True, blank=True, related_name='auctions')
+    institution = models.ForeignKey(Institution, on_delete=models.PROTECT, null=True, blank=True, related_name='auctions')
     notes = models.TextField(blank=True)
     sources = models.ManyToManyField(Source, blank=True, related_name='auctions')
     images = GenericRelation(Image)
@@ -182,7 +182,7 @@ class AuctionPerson(models.Model):
         ('auctioneer', 'Auctioneer'),
     ]
     auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name='auction_persons')
-    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='person_auctions')
+    person = models.ForeignKey(Person, on_delete=models.PROTECT, related_name='person_auctions')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
 
     def __str__(self):
@@ -192,7 +192,7 @@ class Exhibition(models.Model):
     name = models.CharField(max_length=255)
     date_start = models.CharField(max_length=100, blank=True)
     date_end = models.CharField(max_length=100, blank=True, null=True)
-    institution = models.ForeignKey(Institution, on_delete=models.SET_NULL, null=True, blank=True, related_name='exhibitions')
+    institution = models.ForeignKey(Institution, on_delete=models.PROTECT, null=True, blank=True, related_name='exhibitions')
     notes = models.TextField(blank=True)
     sources = models.ManyToManyField(Source, blank=True, related_name='exhibitions')
     images = GenericRelation(Image)
@@ -207,11 +207,11 @@ class Interaction(models.Model):
         ('singular', 'Singular'),
     ]
 
-    entity1_person = models.ForeignKey(Person, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions_as_entity1')
-    entity1_institution = models.ForeignKey(Institution, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions_as_entity1')
+    entity1_person = models.ForeignKey(Person, on_delete=models.PROTECT, null=True, blank=True, related_name='interactions_as_entity1')
+    entity1_institution = models.ForeignKey(Institution, on_delete=models.PROTECT, null=True, blank=True, related_name='interactions_as_entity1')
 
-    entity2_person = models.ForeignKey(Person, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions_as_entity2')
-    entity2_institution = models.ForeignKey(Institution, on_delete=models.CASCADE, null=True, blank=True, related_name='interactions_as_entity2')
+    entity2_person = models.ForeignKey(Person, on_delete=models.PROTECT, null=True, blank=True, related_name='interactions_as_entity2')
+    entity2_institution = models.ForeignKey(Institution, on_delete=models.PROTECT, null=True, blank=True, related_name='interactions_as_entity2')
 
     interaction_type = models.CharField(max_length=20, choices=INTERACTION_TYPES)
     date = models.CharField(max_length=100, blank=True)
@@ -235,7 +235,7 @@ class Interaction(models.Model):
 
 class InteractionSource(models.Model):
     interaction = models.ForeignKey(Interaction, on_delete=models.CASCADE)
-    source = models.ForeignKey(Source, on_delete=models.CASCADE)
+    source = models.ForeignKey(Source, on_delete=models.PROTECT)
     notes = models.CharField(max_length=150, blank=True)
 
     def __str__(self):

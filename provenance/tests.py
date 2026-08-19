@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from .models import Source, Artwork, ProvenanceEvent, Institution, Auction, Exhibition, EventType, ArtType, Medium, Person, Interaction
+from .models import Source, Artwork, ProvenanceEvent, Institution, Auction, Exhibition, EventType, ArtType, Medium, Person, Interaction, ArtworkRelationship
 
 class SourceModelTest(TestCase):
     def test_source_str_truncation(self):
@@ -329,6 +329,84 @@ class LookupAPITest(TestCase):
         results = response.json()['results']
         names = [r['name'] for r in results]
         self.assertEqual(names, ["Alte Nationalgalerie", "Louvre Museum", "metropolitan Museum"])
+
+
+from django.db.models import ProtectedError
+
+class PersonDeletionProtectionTest(TestCase):
+    def setUp(self):
+        self.person = Person.objects.create(family_name="Gogh", first_name="Vincent")
+        
+        self.art_type = ArtType.objects.create(name="Painting")
+        self.medium = Medium.objects.create(name="Oil on Canvas", type=self.art_type)
+        self.artwork = Artwork.objects.create(name="Almond Blossoms", medium=self.medium)
+        
+        self.event_type = EventType.objects.create(name="Acquisition")
+        
+    def test_delete_person_succeeds_when_not_referenced(self):
+        person_to_delete = Person.objects.create(family_name="Unreferenced", first_name="Person")
+        person_id = person_to_delete.id
+        person_to_delete.delete()
+        self.assertFalse(Person.objects.filter(id=person_id).exists())
+        
+    def test_delete_person_fails_when_referenced_in_provenance_event(self):
+        # Create an event referencing the person
+        ProvenanceEvent.objects.create(
+            artwork=self.artwork,
+            event_type=self.event_type,
+            sequence_number=1,
+            person=self.person,
+            date="1889"
+        )
+        
+        # Attempting to delete the person should raise ProtectedError
+        with self.assertRaises(ProtectedError):
+            self.person.delete()
+            
+        # Verify the person still exists
+        self.assertTrue(Person.objects.filter(id=self.person.id).exists())
+
+
+class GeneralDeletionProtectionTest(TestCase):
+    def setUp(self):
+        self.art_type = ArtType.objects.create(name="Painting")
+        self.medium = Medium.objects.create(name="Oil on Canvas", type=self.art_type)
+        self.artwork_1 = Artwork.objects.create(name="Artwork 1", medium=self.medium)
+        self.artwork_2 = Artwork.objects.create(name="Artwork 2", medium=self.medium)
+        self.institution = Institution.objects.create(name="Louvre Museum")
+        
+    def test_delete_medium_fails_when_referenced_by_artwork(self):
+        with self.assertRaises(ProtectedError):
+            self.medium.delete()
+        self.assertTrue(Medium.objects.filter(id=self.medium.id).exists())
+
+    def test_delete_artwork_fails_when_referenced_by_relationship(self):
+        # Create a relationship between artwork 1 and artwork 2
+        ArtworkRelationship.objects.create(
+            source_artwork=self.artwork_1,
+            target_artwork=self.artwork_2,
+            type="study_for"
+        )
+        
+        with self.assertRaises(ProtectedError):
+            self.artwork_1.delete()
+        self.assertTrue(Artwork.objects.filter(id=self.artwork_1.id).exists())
+
+        with self.assertRaises(ProtectedError):
+            self.artwork_2.delete()
+        self.assertTrue(Artwork.objects.filter(id=self.artwork_2.id).exists())
+
+    def test_delete_institution_fails_when_referenced_by_exhibition(self):
+        Exhibition.objects.create(
+            name="Great Exhibition",
+            date_start="1851",
+            institution=self.institution
+        )
+        with self.assertRaises(ProtectedError):
+            self.institution.delete()
+        self.assertTrue(Institution.objects.filter(id=self.institution.id).exists())
+
+
 
 
 

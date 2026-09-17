@@ -148,6 +148,7 @@ export interface AuctionReport {
   name: string;
   date: string;
   institution: string;
+  notes?: string;
   artwork_count: number;
   artworks: {
     id: number;

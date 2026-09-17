@@ -425,6 +425,7 @@ def auction_list(request):
                 'name': auction.name,
                 'date': auction.date,
                 'institution': str(auction.institution) if auction.institution else '',
+                'notes': auction.notes or '',
                 'artworks': artworks_data,
                 'artwork_count': len(artworks_data),
                 'persons': persons_data,

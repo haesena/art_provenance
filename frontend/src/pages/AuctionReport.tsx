@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAuctionsReport, AuctionReport } from '../services/api';
-import { Gavel, ChevronRight, ChevronDown, ImageIcon, Search, Calendar, User } from 'lucide-react';
+import { Gavel, ChevronRight, ChevronDown, ImageIcon, Search, Calendar, User, Info } from 'lucide-react';
 import { getDeterministicColor } from '../utils/colorUtils';
 
 const AuctionReportPage: React.FC = () => {
@@ -155,6 +155,16 @@ const AuctionReportPage: React.FC = () => {
 
                         {expandedIds.includes(auc.id) && (
                             <div className="border-t border-gray-100 bg-gray-50/30 p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                                {auc.notes && (
+                                    <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3.5 flex items-start gap-3 text-xs text-indigo-900 shadow-sm">
+                                        <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                                        <div>
+                                            <span className="font-bold text-indigo-950 uppercase tracking-wider text-[10px] block mb-1">Auction Notes</span>
+                                            <p className="leading-relaxed text-indigo-900 font-medium">"{auc.notes}"</p>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Tab selector */}
                                 <div className="flex gap-4 border-b border-gray-200 pb-2">
                                     <button

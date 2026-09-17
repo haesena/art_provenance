@@ -56,6 +56,7 @@ export interface ProvenanceEvent {
   id: number;
   artwork_id: number;
   artwork_name: string;
+  artwork_image?: string | null;
   sequence: number;
   type: string;
   date: string | null;
@@ -82,12 +83,36 @@ export interface Person {
   artwork_count?: number;
   event_count?: number;
   interaction_count?: number;
+  auction_count?: number;
   image?: string | null;
+}
+
+export interface PersonAuction {
+  id: number;
+  name: string;
+  date: string;
+  institution: string;
+  roles: string[];
+  notes?: string;
+  artworks: {
+    id: number;
+    name: string;
+    image: string | null;
+  }[];
+  sources?: { source: string; notes?: string }[];
 }
 
 export interface EventType {
   id: number;
   name: string;
+}
+
+export interface InstitutionAuctionInfo {
+  id: number;
+  name: string;
+  date: string;
+  artwork_count: number;
+  notes?: string;
 }
 
 export interface Institution {
@@ -103,6 +128,19 @@ export interface Institution {
   }[];
   interaction_count: number;
   interactions?: Interaction[];
+  auction_count?: number;
+  auctions?: InstitutionAuctionInfo[];
+}
+
+export interface AuctionPersonInfo {
+  id: number;
+  name: string;
+  first_name: string;
+  family_name: string;
+  image: string | null;
+  roles: string[];
+  role: string;
+  notes: string;
 }
 
 export interface AuctionReport {
@@ -117,6 +155,8 @@ export interface AuctionReport {
     image: string | null;
     event_types: string[];
   }[];
+  person_count: number;
+  persons: AuctionPersonInfo[];
 }
 
 export interface ExhibitionReport {
@@ -155,6 +195,7 @@ export interface PersonDetail extends Person {
     artwork_name: string;
   })[];
   interactions?: Interaction[];
+  auctions?: PersonAuction[];
 }
 
 export interface User {

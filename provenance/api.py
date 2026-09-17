@@ -74,10 +74,14 @@ def format_provenance_event(event):
     else:
         actor_name = "Unknown"
 
+    artwork_img_obj = next(iter(event.artwork.images.all()), None) if (event.artwork and hasattr(event.artwork, 'images')) else None
+    artwork_image = artwork_img_obj.image.url if (artwork_img_obj and artwork_img_obj.image) else None
+
     return {
         'id': event.id,
         'artwork_id': event.artwork.id,
         'artwork_name': event.artwork.name,
+        'artwork_image': artwork_image,
         'sequence': event.sequence_number,
         'type': event.event_type.name if event.event_type else '',
         'date': event.date,
@@ -118,6 +122,9 @@ def artwork_detail(request, pk):
 
 def person_list(request):
     from django.db.models import Count
+    from collections import defaultdict
+    from .models import AuctionPerson, ProvenanceEvent
+
     persons = Person.objects.prefetch_related('images').annotate(
         event_count=Count('provenance_events', distinct=True),
         artwork_count=Count('provenance_events__artwork', distinct=True),
@@ -128,8 +135,18 @@ def person_list(request):
     if event_type:
         persons = persons.filter(provenance_events__event_type_id=event_type).distinct()
 
+    # Pre-fetch auction relationships for all persons to count distinct auctions efficiently
+    ap_map = defaultdict(set)
+    for p_id, a_id in AuctionPerson.objects.values_list('person_id', 'auction_id'):
+        ap_map[p_id].add(a_id)
+
+    pe_map = defaultdict(set)
+    for p_id, a_id in ProvenanceEvent.objects.filter(auction__isnull=False, person__isnull=False).values_list('person_id', 'auction_id'):
+        pe_map[p_id].add(a_id)
+
     data = []
     for person in persons:
+        auction_ids = ap_map[person.id] | pe_map[person.id]
         data.append({
             'id': person.id,
             'family_name': person.family_name,
@@ -139,6 +156,7 @@ def person_list(request):
             'event_count': person.event_count,
             'artwork_count': person.artwork_count,
             'interaction_count': person.interaction_count,
+            'auction_count': len(auction_ids),
             'image': person.images.first().image.url if person.images.exists() else None,
         })
     return JsonResponse({'results': data})
@@ -154,12 +172,12 @@ def person_detail(request, pk):
     person = get_object_or_404(Person.objects.prefetch_related('images'), pk=pk)
     
     events = []
-    for event in person.provenance_events.all().select_related('artwork'):
+    for event in person.provenance_events.all().select_related('artwork').prefetch_related('artwork__images'):
         events.append(format_provenance_event(event))
     events.sort(key=lambda e: (e['artwork_name'].lower(), e['sequence']))
 
     from django.db.models import Q
-    from .models import Interaction
+    from .models import Interaction, AuctionPerson, ProvenanceEvent
     person_interactions = Interaction.objects.filter(
         Q(entity1_person=person) | Q(entity2_person=person)
     ).select_related(
@@ -168,6 +186,65 @@ def person_detail(request, pk):
     ).prefetch_related('interactionsource_set__source')
     
     interactions = [format_interaction(i) for i in person_interactions]
+
+    # Fetch related auctions
+    ap_qs = AuctionPerson.objects.filter(person=person).select_related('auction', 'auction__institution').prefetch_related('auction__sources')
+    pe_auction_qs = ProvenanceEvent.objects.filter(person=person, auction__isnull=False).select_related('auction', 'auction__institution', 'artwork').prefetch_related('auction__sources')
+    
+    auction_map = {}
+    
+    for ap in ap_qs:
+        auc = ap.auction
+        if auc.id not in auction_map:
+            auction_map[auc.id] = {
+                'id': auc.id,
+                'name': auc.name,
+                'date': auc.date or '',
+                'institution': str(auc.institution) if auc.institution else '',
+                'roles': set(),
+                'notes': auc.notes or '',
+                'artworks': {},
+                'sources': [{'source': str(s), 'notes': ''} for s in auc.sources.all()]
+            }
+        role_disp = ap.get_role_display()
+        if role_disp:
+            auction_map[auc.id]['roles'].add(role_disp)
+
+    for pe in pe_auction_qs:
+        auc = pe.auction
+        if auc.id not in auction_map:
+            auction_map[auc.id] = {
+                'id': auc.id,
+                'name': auc.name,
+                'date': auc.date or '',
+                'institution': str(auc.institution) if auc.institution else '',
+                'roles': set(),
+                'notes': auc.notes or '',
+                'artworks': {},
+                'sources': [{'source': str(s), 'notes': ''} for s in auc.sources.all()]
+            }
+        if pe.artwork:
+            art = pe.artwork
+            if art.id not in auction_map[auc.id]['artworks']:
+                auction_map[auc.id]['artworks'][art.id] = {
+                    'id': art.id,
+                    'name': art.name,
+                    'image': art.images.first().image.url if art.images.exists() else None
+                }
+
+    auctions = []
+    for auc_id, auc_data in auction_map.items():
+        auctions.append({
+            'id': auc_data['id'],
+            'name': auc_data['name'],
+            'date': auc_data['date'],
+            'institution': auc_data['institution'],
+            'roles': sorted(list(auc_data['roles'])),
+            'notes': auc_data['notes'],
+            'artworks': list(auc_data['artworks'].values()),
+            'sources': auc_data['sources'],
+        })
+    auctions.sort(key=lambda a: a['name'].lower())
         
     data = {
         'id': person.id,
@@ -179,12 +256,13 @@ def person_detail(request, pk):
         'image': person.images.first().image.url if person.images.exists() else None,
         'events': events,
         'interactions': interactions,
+        'auctions': auctions,
     }
     return JsonResponse(data)
 
 def institution_list(request):
-    from .models import Institution, ProvenanceEvent
-    from django.db.models import Prefetch
+    from .models import Institution, ProvenanceEvent, Auction, Interaction
+    from django.db.models import Prefetch, Q
 
     institutions = Institution.objects.all().order_by('name')
     
@@ -221,8 +299,6 @@ def institution_list(request):
             art_info['event_types'] = sorted(list(art_info['event_types']))
             artworks_data.append(art_info)
 
-        from django.db.models import Q
-        from .models import Interaction
         interactions_qs = Interaction.objects.filter(
             Q(entity1_institution=inst) | Q(entity2_institution=inst)
         ).select_related(
@@ -232,7 +308,20 @@ def institution_list(request):
         
         interactions_data = [format_interaction(i) for i in interactions_qs]
         
-        if artworks_data or interactions_data:
+        # Related auctions held at this institution
+        auctions_qs = Auction.objects.filter(institution=inst).prefetch_related('provenance_events')
+        auctions_data = []
+        for auc in auctions_qs:
+            art_ids = set(e.artwork_id for e in auc.provenance_events.all())
+            auctions_data.append({
+                'id': auc.id,
+                'name': auc.name,
+                'date': auc.date or '',
+                'artwork_count': len(art_ids),
+                'notes': auc.notes or ''
+            })
+        
+        if artworks_data or interactions_data or auctions_data:
             data.append({
                 'id': inst.id,
                 'name': inst.name,
@@ -240,20 +329,23 @@ def institution_list(request):
                 'artworks': artworks_data,
                 'artwork_count': len(artworks_data),
                 'interactions': interactions_data,
-                'interaction_count': len(interactions_data)
+                'interaction_count': len(interactions_data),
+                'auctions': auctions_data,
+                'auction_count': len(auctions_data)
             })
             
     return JsonResponse({'results': data})
 
 def auction_list(request):
-    from .models import Auction, ProvenanceEvent
+    from .models import Auction, ProvenanceEvent, AuctionPerson
     
     auctions = Auction.objects.all().order_by('name')
     
     data = []
     for auction in auctions:
-        events = ProvenanceEvent.objects.filter(auction=auction).select_related('artwork', 'event_type')
+        events = ProvenanceEvent.objects.filter(auction=auction).select_related('artwork', 'event_type', 'person')
         
+        # 1. Artworks
         artwork_map = {}
         for event in events:
             art = event.artwork
@@ -271,15 +363,72 @@ def auction_list(request):
         for art_id, art_info in artwork_map.items():
             art_info['event_types'] = sorted(list(art_info['event_types']))
             artworks_data.append(art_info)
+
+        # 2. Persons
+        person_map = {}
+        ap_qs = AuctionPerson.objects.filter(auction=auction).select_related('person')
+        for ap in ap_qs:
+            p = ap.person
+            if p.id not in person_map:
+                person_map[p.id] = {
+                    'id': p.id,
+                    'name': f"{p.family_name}, {p.first_name}".strip(", "),
+                    'first_name': p.first_name,
+                    'family_name': p.family_name,
+                    'image': p.images.first().image.url if p.images.exists() else None,
+                    'roles': set(),
+                    'notes': []
+                }
+            role_disp = ap.get_role_display()
+            if role_disp:
+                person_map[p.id]['roles'].add(role_disp)
+
+        for event in events:
+            if event.person:
+                p = event.person
+                if p.id not in person_map:
+                    person_map[p.id] = {
+                        'id': p.id,
+                        'name': f"{p.family_name}, {p.first_name}".strip(", "),
+                        'first_name': p.first_name,
+                        'family_name': p.family_name,
+                        'image': p.images.first().image.url if p.images.exists() else None,
+                        'roles': set(),
+                        'notes': []
+                    }
+                if event.event_type:
+                    person_map[p.id]['roles'].add(event.event_type.name)
+                if event.notes and event.notes not in person_map[p.id]['notes']:
+                    person_map[p.id]['notes'].append(event.notes)
+
+        persons_data = []
+        for p_id, p_info in person_map.items():
+            notes_list = list(p_info['notes'])
+            if not notes_list and auction.notes:
+                notes_list.append(auction.notes)
+            roles_list = sorted(list(p_info['roles']))
+            persons_data.append({
+                'id': p_info['id'],
+                'name': p_info['name'],
+                'first_name': p_info['first_name'],
+                'family_name': p_info['family_name'],
+                'image': p_info['image'],
+                'roles': roles_list,
+                'role': ", ".join(roles_list),
+                'notes': " | ".join(notes_list)
+            })
+        persons_data.sort(key=lambda p: p['name'].lower())
             
-        if artworks_data:
+        if artworks_data or persons_data:
             data.append({
                 'id': auction.id,
                 'name': auction.name,
                 'date': auction.date,
                 'institution': str(auction.institution) if auction.institution else '',
                 'artworks': artworks_data,
-                'artwork_count': len(artworks_data)
+                'artwork_count': len(artworks_data),
+                'persons': persons_data,
+                'person_count': len(persons_data),
             })
             
     return JsonResponse({'results': data})

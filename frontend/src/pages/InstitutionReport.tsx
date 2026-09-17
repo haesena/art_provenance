@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getInstitutions, Institution } from '../services/api';
-import { Landmark, ChevronRight, ChevronDown, ImageIcon, Search, ArrowLeftRight, BookOpen } from 'lucide-react';
+import { Landmark, ChevronRight, ChevronDown, ImageIcon, Search, ArrowLeftRight, BookOpen, Gavel, Calendar } from 'lucide-react';
 import { getDeterministicColor } from '../utils/colorUtils';
 
 const InstitutionReport: React.FC = () => {
@@ -9,13 +9,17 @@ const InstitutionReport: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [expandedIds, setExpandedIds] = useState<number[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [expandedTabs, setExpandedTabs] = useState<Record<number, 'artworks' | 'interactions'>>({});
+    const [categoryFilter, setCategoryFilter] = useState<'all' | 'artworks' | 'auctions' | 'interactions'>('all');
+    const [expandedTabs, setExpandedTabs] = useState<Record<number, 'artworks' | 'auctions' | 'interactions'>>({});
 
-    const getActiveTab = (instId: number, inst: Institution) => {
-        return expandedTabs[instId] || (inst.artwork_count > 0 ? 'artworks' : 'interactions');
+    const getActiveTab = (instId: number, inst: Institution): 'artworks' | 'auctions' | 'interactions' => {
+        if (expandedTabs[instId]) return expandedTabs[instId];
+        if (inst.artwork_count > 0) return 'artworks';
+        if ((inst.auction_count || 0) > 0) return 'auctions';
+        return 'interactions';
     };
     
-    const setTabForInstitution = (instId: number, tab: 'artworks' | 'interactions') => {
+    const setTabForInstitution = (instId: number, tab: 'artworks' | 'auctions' | 'interactions') => {
         setExpandedTabs(prev => ({ ...prev, [instId]: tab }));
     };
 
@@ -39,10 +43,18 @@ const InstitutionReport: React.FC = () => {
         );
     };
 
-    const filteredInstitutions = institutions.filter(inst =>
-        inst.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        inst.place.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredInstitutions = institutions.filter(inst => {
+        const matchesSearch = inst.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            inst.place.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        if (!matchesSearch) return false;
+
+        if (categoryFilter === 'artworks') return inst.artwork_count > 0;
+        if (categoryFilter === 'auctions') return (inst.auction_count || 0) > 0;
+        if (categoryFilter === 'interactions') return (inst.interaction_count || 0) > 0;
+
+        return true;
+    });
 
     if (loading) {
         return (
@@ -71,6 +83,53 @@ const InstitutionReport: React.FC = () => {
                 </div>
             </div>
 
+            {/* Filter bar for category selection */}
+            <div className="flex flex-wrap items-center gap-2 bg-white p-1.5 border border-gray-200 rounded-xl shadow-sm">
+                <button
+                    onClick={() => setCategoryFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        categoryFilter === 'all'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    All ({institutions.length})
+                </button>
+                <button
+                    onClick={() => setCategoryFilter('artworks')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                        categoryFilter === 'artworks'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    With Artworks ({institutions.filter(i => i.artwork_count > 0).length})
+                </button>
+                <button
+                    onClick={() => setCategoryFilter('auctions')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                        categoryFilter === 'auctions'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    <Gavel className="w-3.5 h-3.5" />
+                    With Auctions ({institutions.filter(i => (i.auction_count || 0) > 0).length})
+                </button>
+                <button
+                    onClick={() => setCategoryFilter('interactions')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                        categoryFilter === 'interactions'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    <ArrowLeftRight className="w-3.5 h-3.5" />
+                    With Interactions ({institutions.filter(i => (i.interaction_count || 0) > 0).length})
+                </button>
+            </div>
+
             <div className="grid gap-4">
                 {filteredInstitutions.map((inst) => (
                     <div key={inst.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -90,6 +149,9 @@ const InstitutionReport: React.FC = () => {
                             <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                                 <span className="bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1 rounded-full text-xs font-bold">
                                     {inst.artwork_count} Artworks
+                                </span>
+                                <span className="bg-purple-50 text-purple-700 border border-purple-100 px-3 py-1 rounded-full text-xs font-bold">
+                                    {inst.auction_count || 0} Auctions
                                 </span>
                                 <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-full text-xs font-bold">
                                     {inst.interaction_count} Interactions
@@ -115,6 +177,17 @@ const InstitutionReport: React.FC = () => {
                                     >
                                         <ImageIcon className="w-3.5 h-3.5" />
                                         Artworks ({inst.artwork_count})
+                                    </button>
+                                    <button
+                                        onClick={() => setTabForInstitution(inst.id, 'auctions')}
+                                        className={`pb-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
+                                            getActiveTab(inst.id, inst) === 'auctions'
+                                                ? 'border-indigo-600 text-indigo-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        <Gavel className="w-3.5 h-3.5" />
+                                        Auctions ({inst.auction_count || 0})
                                     </button>
                                     <button
                                         onClick={() => setTabForInstitution(inst.id, 'interactions')}
@@ -160,29 +233,64 @@ const InstitutionReport: React.FC = () => {
                                                 </div>
                                             </Link>
                                         ))}
-                                        {inst.artwork_count === 0 && (
-                                            <div className="col-span-full py-6 text-center text-sm text-gray-500 italic">
-                                                No artworks cataloged for this institution.
+                                        {inst.artworks.length === 0 && (
+                                            <div className="col-span-full text-center py-6 text-xs text-gray-500 italic">
+                                                No artworks associated with this institution.
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : getActiveTab(inst.id, inst) === 'auctions' ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {(inst.auctions || []).map(auc => (
+                                            <div key={auc.id} className="p-4 bg-white border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-sm transition-all flex flex-col justify-between">
+                                                <div>
+                                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                                        <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                                                            <Gavel className="w-4 h-4 text-indigo-600 shrink-0" />
+                                                            {auc.name}
+                                                        </h4>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-xs text-gray-500 my-2">
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                                                            {auc.date || 'Date unknown'}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span className="bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded text-[10px]">
+                                                            {auc.artwork_count} {auc.artwork_count === 1 ? 'Artwork' : 'Artworks'}
+                                                        </span>
+                                                    </div>
+                                                    {auc.notes && (
+                                                        <p className="text-xs text-gray-600 italic bg-gray-50 p-2 rounded border border-gray-100 leading-relaxed mt-2">
+                                                            "{auc.notes}"
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {(inst.auctions || []).length === 0 && (
+                                            <div className="col-span-full py-6 text-center text-xs text-gray-500 italic">
+                                                No auctions recorded for this institution.
                                             </div>
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="space-y-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {(inst.interactions || []).map(interaction => {
                                             const isEntity1Me = interaction.entity1.type === 'institution' && interaction.entity1.id === inst.id;
                                             const otherEntity = isEntity1Me ? interaction.entity2 : interaction.entity1;
-                                            
+
                                             return (
-                                                <div key={interaction.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded uppercase tracking-wider">
+                                                <div key={interaction.id} className="p-4 bg-white border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-sm transition-all">
+                                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                                        <div>
+                                                            <span className="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-700 font-bold rounded uppercase tracking-wider mb-1 inline-block">
                                                                 {interaction.interaction_type}
                                                             </span>
                                                             <div className="text-sm font-semibold text-gray-900 flex items-center gap-1">
                                                                 <span>Connected with:</span>
                                                                 {otherEntity.type === 'person' ? (
-                                                                    <Link to={`/persons/${otherEntity.id}`} className="text-indigo-600 hover:underline">
+                                                                    <Link to={`/persons/${otherEntity.id}`} state={{ from: 'institutions' }} className="text-indigo-600 hover:underline">
                                                                         {otherEntity.name}
                                                                     </Link>
                                                                 ) : (

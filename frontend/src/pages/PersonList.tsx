@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getPersons, getEventTypes, Person, EventType } from '../services/api';
-import { Search, User as UserIcon, Filter, X } from 'lucide-react';
+import { Search, User as UserIcon, Filter, X, Image as ImageIcon, History, ArrowLeftRight, Gavel } from 'lucide-react';
 
 const PersonList: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -10,6 +10,7 @@ const PersonList: React.FC = () => {
     // Initialize state from search parameters
     const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
     const [selectedEventType, setSelectedEventType] = useState<string>(searchParams.get('event_type') || '');
+    const [categoryFilter, setCategoryFilter] = useState<'all' | 'artworks' | 'events' | 'interactions' | 'auctions'>('all');
 
     const [loading, setLoading] = useState(true);
     const [eventTypes, setEventTypes] = useState<EventType[]>([]);
@@ -53,12 +54,21 @@ const PersonList: React.FC = () => {
 
     const filteredPersons = persons.filter(person => {
         const fullSearch = `${person.first_name} ${person.family_name}`.toLowerCase();
-        return fullSearch.includes(searchTerm.toLowerCase());
+        const matchesSearch = fullSearch.includes(searchTerm.toLowerCase());
+        if (!matchesSearch) return false;
+
+        if (categoryFilter === 'artworks') return (person.artwork_count || 0) > 0;
+        if (categoryFilter === 'events') return (person.event_count || 0) > 0;
+        if (categoryFilter === 'interactions') return (person.interaction_count || 0) > 0;
+        if (categoryFilter === 'auctions') return (person.auction_count || 0) > 0;
+
+        return true;
     });
 
     const resetFilters = () => {
         setSearchTerm('');
         setSelectedEventType('');
+        setCategoryFilter('all');
     };
 
     return (
@@ -87,6 +97,64 @@ const PersonList: React.FC = () => {
                         )}
                     </button>
                 </div>
+            </div>
+
+            {/* Filter bar for category selection */}
+            <div className="flex flex-wrap items-center gap-2 bg-white p-1.5 border border-gray-200 rounded-xl shadow-sm">
+                <button
+                    onClick={() => setCategoryFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        categoryFilter === 'all'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    All ({persons.length})
+                </button>
+                <button
+                    onClick={() => setCategoryFilter('artworks')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                        categoryFilter === 'artworks'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    With Artworks ({persons.filter(p => (p.artwork_count || 0) > 0).length})
+                </button>
+                <button
+                    onClick={() => setCategoryFilter('events')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                        categoryFilter === 'events'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    <History className="w-3.5 h-3.5" />
+                    With Events ({persons.filter(p => (p.event_count || 0) > 0).length})
+                </button>
+                <button
+                    onClick={() => setCategoryFilter('interactions')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                        categoryFilter === 'interactions'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    <ArrowLeftRight className="w-3.5 h-3.5" />
+                    With Interactions ({persons.filter(p => (p.interaction_count || 0) > 0).length})
+                </button>
+                <button
+                    onClick={() => setCategoryFilter('auctions')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                        categoryFilter === 'auctions'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    <Gavel className="w-3.5 h-3.5" />
+                    With Auctions ({persons.filter(p => (p.auction_count || 0) > 0).length})
+                </button>
             </div>
 
             {showFilters && (
@@ -136,7 +204,7 @@ const PersonList: React.FC = () => {
                                     <p className="text-xs text-gray-400 mb-1">
                                         {person.birth_date || '?'} — {person.death_date || '?'}
                                     </p>
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-1.5 mt-1">
                                         <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-md font-medium">
                                             {person.artwork_count || 0} {person.artwork_count === 1 ? 'Artwork' : 'Artworks'}
                                         </span>
@@ -145,6 +213,9 @@ const PersonList: React.FC = () => {
                                         </span>
                                         <span className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded-md font-medium">
                                             {person.interaction_count || 0} {person.interaction_count === 1 ? 'Interaction' : 'Interactions'}
+                                        </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded-md font-medium">
+                                            {person.auction_count || 0} {person.auction_count === 1 ? 'Auction' : 'Auctions'}
                                         </span>
                                     </div>
                                 </div>

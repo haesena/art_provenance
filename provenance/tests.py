@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from .models import Source, Artwork, ProvenanceEvent, Institution, Auction, Exhibition, EventType, ArtType, Medium, Person, Interaction, ArtworkRelationship
+from .models import Source, Artwork, ProvenanceEvent, Institution, Auction, AuctionPerson, Exhibition, EventType, ArtType, Medium, Person, Interaction, ArtworkRelationship
 
 class SourceModelTest(TestCase):
     def test_source_str_truncation(self):
@@ -277,6 +277,66 @@ class PersonDetailAPITest(TestCase):
         self.assertEqual(events[2]['sequence'], 1)
 
 
+class PersonAuctionAPITest(TestCase):
+    def setUp(self):
+        self.person = Person.objects.create(family_name="Monet", first_name="Claude")
+        self.auction1 = Auction.objects.create(name="Impressionist Masterpieces Sale", date="1910")
+        self.auction2 = Auction.objects.create(name="Paris Modern Art Auction", date="1920")
+        
+        # Link person to auction1 via AuctionPerson as seller
+        AuctionPerson.objects.create(auction=self.auction1, person=self.person, role="seller")
+        
+        # Link person to auction2 via ProvenanceEvent
+        self.art_type = ArtType.objects.create(name="Painting")
+        self.medium = Medium.objects.create(name="Oil on Canvas", type=self.art_type)
+        self.artwork = Artwork.objects.create(name="Water Lilies", medium=self.medium)
+        self.event_type = EventType.objects.create(name="Auction Sale")
+        
+        ProvenanceEvent.objects.create(
+            artwork=self.artwork,
+            event_type=self.event_type,
+            sequence_number=1,
+            person=self.person,
+            auction=self.auction2,
+            date="1920"
+        )
+
+    def test_person_list_includes_auction_count(self):
+        response = self.client.get('/api/persons/')
+        self.assertEqual(response.status_code, 200)
+        results = response.json()['results']
+        monet = next(p for p in results if p['id'] == self.person.id)
+        self.assertEqual(monet['auction_count'], 2)
+
+    def test_person_detail_includes_auctions(self):
+        response = self.client.get(f'/api/persons/{self.person.id}/')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        auctions = data['auctions']
+        self.assertEqual(len(auctions), 2)
+        auction_names = [a['name'] for a in auctions]
+        self.assertIn("Impressionist Masterpieces Sale", auction_names)
+        self.assertIn("Paris Modern Art Auction", auction_names)
+        
+        # Check auction1 seller role
+        auc1_data = next(a for a in auctions if a['id'] == self.auction1.id)
+        self.assertIn("Seller", auc1_data['roles'])
+        
+        # Check auction2 artwork link
+        auc2_data = next(a for a in auctions if a['id'] == self.auction2.id)
+        self.assertEqual(len(auc2_data['artworks']), 1)
+        self.assertEqual(auc2_data['artworks'][0]['name'], "Water Lilies")
+
+    def test_auctions_report_includes_persons(self):
+        response = self.client.get('/api/auctions/')
+        self.assertEqual(response.status_code, 200)
+        results = response.json()['results']
+        auc1 = next(a for a in results if a['id'] == self.auction1.id)
+        self.assertEqual(auc1['person_count'], 1)
+        self.assertEqual(auc1['persons'][0]['name'], "Monet, Claude")
+        self.assertIn("Seller", auc1['persons'][0]['roles'])
+
+
 class InstitutionListAPITest(TestCase):
     def setUp(self):
         self.inst = Institution.objects.create(name="Louvre Museum", place="Paris")
@@ -303,6 +363,18 @@ class InstitutionListAPITest(TestCase):
         inst_data = results[0]
         self.assertEqual(inst_data['name'], "Louvre Museum")
         self.assertEqual(inst_data['interactions'][0]['entity2']['name'], "Louvre Museum")
+
+    def test_institution_list_includes_auctions(self):
+        auction = Auction.objects.create(name="Louvre Special Sale", institution=self.inst, date="1900")
+        url = reverse('institution-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.json()
+        results = data['results']
+        inst_data = next(i for i in results if i['id'] == self.inst.id)
+        self.assertEqual(inst_data['auction_count'], 1)
+        self.assertEqual(inst_data['auctions'][0]['name'], "Louvre Special Sale")
 
 
 class LookupAPITest(TestCase):

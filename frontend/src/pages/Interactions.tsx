@@ -5,7 +5,7 @@ import {
 } from '../services/api';
 import { 
   Plus, Search, Trash2, Edit, X, ArrowLeftRight, User, Landmark, 
-  Check, ChevronDown, Calendar, MapPin, AlertCircle, Filter, Sparkles, Clock, Zap 
+  Check, ChevronDown, Calendar, MapPin, AlertCircle, Sparkles, Clock, Zap 
 } from 'lucide-react';
 
 const SearchableSelect: React.FC<{
@@ -311,7 +311,7 @@ const Interactions: React.FC = () => {
       </div>
 
       {/* Filters section */}
-      <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+      <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm flex flex-col md:flex-row gap-4 items-stretch md:items-center">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
           <input
@@ -323,31 +323,25 @@ const Interactions: React.FC = () => {
           />
         </div>
 
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Type:</span>
-          </div>
-          <div className="flex bg-slate-100 rounded-lg p-0.5 border border-slate-200">
-            <button
-              onClick={() => setTypeFilter('')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${typeFilter === '' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setTypeFilter('long term')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${typeFilter === 'long term' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Long Term
-            </button>
-            <button
-              onClick={() => setTypeFilter('singular')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${typeFilter === 'singular' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Singular
-            </button>
-          </div>
+        <div className="flex bg-slate-100 rounded-lg p-0.5 border border-slate-200 shrink-0">
+          <button
+            onClick={() => setTypeFilter('')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${typeFilter === '' ? 'bg-white text-indigo-700 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'}`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setTypeFilter('long term')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${typeFilter === 'long term' ? 'bg-white text-indigo-700 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'}`}
+          >
+            Long-term
+          </button>
+          <button
+            onClick={() => setTypeFilter('singular')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${typeFilter === 'singular' ? 'bg-white text-indigo-700 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'}`}
+          >
+            Singular
+          </button>
         </div>
       </div>
 

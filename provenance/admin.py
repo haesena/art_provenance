@@ -97,22 +97,26 @@ class ProvenanceEventInline(admin.StackedInline):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('event_type', 'person', 'institution', 'auction', 'exhibition')
 
+admin.site.disable_action('delete_selected')
+
 @admin.register(Person)
 class PersonAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('family_name', 'first_name', 'birth_date', 'death_date')
     search_fields = ('family_name', 'first_name')
     inlines = [ImageInline]
 
 @admin.register(InstitutionType)
 class InstitutionTypeAdmin(admin.ModelAdmin):
-    pass
+    actions = None
 
 @admin.register(EventType)
 class EventTypeAdmin(admin.ModelAdmin):
-    pass
+    actions = None
 
 @admin.register(Institution)
 class InstitutionAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('name', 'type', 'place')
     list_filter = ('type',)
     search_fields = ('name',)
@@ -125,6 +129,7 @@ class AuctionPersonInline(admin.TabularInline):
 
 @admin.register(Auction)
 class AuctionAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('name', 'date', 'institution')
     search_fields = ('name', 'notes')
     inlines = [AuctionPersonInline, ImageInline]
@@ -132,6 +137,7 @@ class AuctionAdmin(admin.ModelAdmin):
 
 @admin.register(Exhibition)
 class ExhibitionAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('name', 'date_start', 'date_end', 'institution')
     search_fields = ('name', 'notes')
     inlines = [ImageInline]
@@ -139,15 +145,17 @@ class ExhibitionAdmin(admin.ModelAdmin):
 
 @admin.register(ArtType)
 class ArtTypeAdmin(admin.ModelAdmin):
-    pass
+    actions = None
 
 @admin.register(Medium)
 class MediumAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('name', 'type')
     list_filter = ('type',)
 
 @admin.register(Artwork)
 class ArtworkAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('name', 'dimension', 'medium')
     search_fields = ('name',)
     filter_horizontal = ('groups',)
@@ -155,6 +163,7 @@ class ArtworkAdmin(admin.ModelAdmin):
 
 @admin.register(Source)
 class SourceAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('source', 'type')
     search_fields = ('source',)
     inlines = [ImageInline]
@@ -171,23 +180,25 @@ class ProvenanceEventSourceInline(admin.StackedInline):
 
 @admin.register(ProvenanceEvent)
 class ProvenanceEventAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('artwork', 'sequence_number', 'event_type', 'date', 'person', 'institution', 'auction', 'exhibition')
-    list_filter = ('event_type', 'certainty', 'auction', 'exhibition', 'sources')
+    list_filter = ('event_type', 'certainty')
     ordering = ('artwork', 'sequence_number')
     search_fields = ('artwork__name', 'person__family_name', 'person__first_name', 'institution__name', 'notes')
     inlines = [ProvenanceEventSourceInline]
 
 @admin.register(ArtworkGroup)
 class ArtworkGroupAdmin(admin.ModelAdmin):
-    pass
+    actions = None
 
 @admin.register(ArtworkRelationship)
 class ArtworkRelationshipAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('source_artwork', 'type', 'target_artwork')
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    pass
+    actions = None
 
 class InteractionSourceInline(admin.StackedInline):
     model = InteractionSource
@@ -198,8 +209,9 @@ class InteractionSourceInline(admin.StackedInline):
 
 @admin.register(Interaction)
 class InteractionAdmin(admin.ModelAdmin):
+    actions = None
     list_display = ('id', 'entity1_person', 'entity1_institution', 'entity2_person', 'entity2_institution', 'interaction_type', 'date', 'place', 'notes')
-    list_filter = ('interaction_type', 'place')
+    show_full_result_count = False
     inlines = [InteractionSourceInline]
     search_fields = ('entity1_person__family_name', 'entity1_person__first_name', 'entity1_institution__name', 'entity2_person__family_name', 'entity2_person__first_name', 'entity2_institution__name', 'place', 'notes')
 

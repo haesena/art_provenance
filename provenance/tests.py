@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from .models import Source, Artwork, ProvenanceEvent, Institution, Auction, AuctionPerson, Exhibition, EventType, ArtType, Medium, Person, Interaction, ArtworkRelationship
+from .models import Source, Artwork, ProvenanceEvent, Institution, Auction, AuctionPerson, AuctionInstitution, Exhibition, EventType, ArtType, Medium, Person, Interaction, ArtworkRelationship
 
 class SourceModelTest(TestCase):
     def test_source_str_truncation(self):
@@ -474,6 +474,18 @@ class GeneralDeletionProtectionTest(TestCase):
             date_start="1851",
             institution=self.institution
         )
+        with self.assertRaises(ProtectedError):
+            self.institution.delete()
+        self.assertTrue(Institution.objects.filter(id=self.institution.id).exists())
+
+    def test_auction_institution_creation_and_deletion_protection(self):
+        auction = Auction.objects.create(name="Special Auction", date="1925")
+        ai = AuctionInstitution.objects.create(
+            auction=auction,
+            institution=self.institution,
+            role="buyer"
+        )
+        self.assertEqual(str(ai), "Louvre Museum as Buyer in Special Auction")
         with self.assertRaises(ProtectedError):
             self.institution.delete()
         self.assertTrue(Institution.objects.filter(id=self.institution.id).exists())

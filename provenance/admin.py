@@ -6,7 +6,7 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from .models import (
     Person, Institution, InstitutionType, ArtType, Artwork,
     ArtworkGroup, Source, ProvenanceEvent, ArtworkRelationship,
-    Image, Medium, Auction, AuctionPerson, Exhibition, EventType,
+    Image, Medium, Auction, AuctionPerson, AuctionInstitution, Exhibition, EventType,
     ProvenanceEventSource, Interaction, InteractionSource
 )
 
@@ -127,12 +127,16 @@ class AuctionPersonInline(admin.TabularInline):
     model = AuctionPerson
     extra = 1
 
+class AuctionInstitutionInline(admin.TabularInline):
+    model = AuctionInstitution
+    extra = 1
+
 @admin.register(Auction)
 class AuctionAdmin(admin.ModelAdmin):
     actions = None
     list_display = ('name', 'date', 'institution')
     search_fields = ('name', 'notes')
-    inlines = [AuctionPersonInline, ImageInline]
+    inlines = [AuctionPersonInline, AuctionInstitutionInline, ImageInline]
     filter_horizontal = ('sources',)
 
 @admin.register(Exhibition)

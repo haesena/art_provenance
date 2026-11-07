@@ -188,6 +188,20 @@ class AuctionPerson(models.Model):
     def __str__(self):
         return f"{self.person} as {self.get_role_display()} in {self.auction}"
 
+class AuctionInstitution(models.Model):
+    ROLE_CHOICES = [
+        ('buyer', 'Buyer'),
+        ('seller', 'Seller'),
+        ('expert', 'Expert'),
+        ('auctioneer', 'Auctioneer'),
+    ]
+    auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name='auction_institutions')
+    institution = models.ForeignKey(Institution, on_delete=models.PROTECT, related_name='institution_auctions')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+
+    def __str__(self):
+        return f"{self.institution} as {self.get_role_display()} in {self.auction}"
+
 class Exhibition(models.Model):
     name = models.CharField(max_length=255)
     date_start = models.CharField(max_length=100, blank=True)

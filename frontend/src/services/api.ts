@@ -143,6 +143,15 @@ export interface AuctionPersonInfo {
   notes: string;
 }
 
+export interface AuctionInstitutionInfo {
+  id: number;
+  name: string;
+  place: string;
+  roles: string[];
+  role: string;
+  notes: string;
+}
+
 export interface AuctionReport {
   id: number;
   name: string;
@@ -158,6 +167,8 @@ export interface AuctionReport {
   }[];
   person_count: number;
   persons: AuctionPersonInfo[];
+  institution_count?: number;
+  institutions?: AuctionInstitutionInfo[];
 }
 
 export interface ExhibitionReport {

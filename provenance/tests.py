@@ -336,6 +336,17 @@ class PersonAuctionAPITest(TestCase):
         self.assertEqual(auc1['persons'][0]['name'], "Monet, Claude")
         self.assertIn("Seller", auc1['persons'][0]['roles'])
 
+    def test_auctions_report_includes_institutions(self):
+        inst = Institution.objects.create(name="Galerie Bernheim-Jeune", place="Paris")
+        AuctionInstitution.objects.create(auction=self.auction1, institution=inst, role="buyer")
+        response = self.client.get('/api/auctions/')
+        self.assertEqual(response.status_code, 200)
+        results = response.json()['results']
+        auc1 = next(a for a in results if a['id'] == self.auction1.id)
+        self.assertEqual(auc1['institution_count'], 1)
+        self.assertEqual(auc1['institutions'][0]['name'], "Galerie Bernheim-Jeune")
+        self.assertIn("Buyer", auc1['institutions'][0]['roles'])
+
 
 class InstitutionListAPITest(TestCase):
     def setUp(self):

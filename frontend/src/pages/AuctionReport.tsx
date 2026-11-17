@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAuctionsReport, AuctionReport } from '../services/api';
-import { Gavel, ChevronRight, ChevronDown, ImageIcon, Search, Calendar, User, Info } from 'lucide-react';
+import { Gavel, ChevronRight, ChevronDown, ImageIcon, Search, Calendar, User, Landmark, Info } from 'lucide-react';
 import { getDeterministicColor } from '../utils/colorUtils';
 
 const AuctionReportPage: React.FC = () => {
@@ -9,8 +9,8 @@ const AuctionReportPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [expandedIds, setExpandedIds] = useState<number[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState<'all' | 'artworks' | 'persons'>('all');
-    const [activeTabs, setActiveTabs] = useState<{ [key: number]: 'artworks' | 'persons' }>({});
+    const [categoryFilter, setCategoryFilter] = useState<'all' | 'artworks' | 'persons' | 'institutions'>('all');
+    const [activeTabs, setActiveTabs] = useState<{ [key: number]: 'artworks' | 'persons' | 'institutions' }>({});
 
     useEffect(() => {
         const fetchAuctions = async () => {
@@ -32,13 +32,16 @@ const AuctionReportPage: React.FC = () => {
         );
     };
 
-    const setTabForAuction = (auctionId: number, tab: 'artworks' | 'persons') => {
+    const setTabForAuction = (auctionId: number, tab: 'artworks' | 'persons' | 'institutions') => {
         setActiveTabs(prev => ({ ...prev, [auctionId]: tab }));
     };
 
-    const getActiveTab = (auctionId: number, auction: AuctionReport): 'artworks' | 'persons' => {
+    const getActiveTab = (auctionId: number, auction: AuctionReport): 'artworks' | 'persons' | 'institutions' => {
         if (activeTabs[auctionId]) return activeTabs[auctionId];
-        return auction.artwork_count > 0 ? 'artworks' : 'persons';
+        if (auction.artwork_count > 0) return 'artworks';
+        if ((auction.person_count || 0) > 0) return 'persons';
+        if ((auction.institution_count || 0) > 0) return 'institutions';
+        return 'artworks';
     };
 
     const filteredAuctions = auctions.filter(auc => {
@@ -49,6 +52,7 @@ const AuctionReportPage: React.FC = () => {
 
         if (categoryFilter === 'artworks') return (auc.artwork_count || 0) > 0;
         if (categoryFilter === 'persons') return (auc.person_count || 0) > 0;
+        if (categoryFilter === 'institutions') return (auc.institution_count || 0) > 0;
 
         return true;
     });
@@ -114,6 +118,17 @@ const AuctionReportPage: React.FC = () => {
                     <User className="w-3.5 h-3.5" />
                     With Persons ({auctions.filter(a => (a.person_count || 0) > 0).length})
                 </button>
+                <button
+                    onClick={() => setCategoryFilter('institutions')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                        categoryFilter === 'institutions'
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                >
+                    <Landmark className="w-3.5 h-3.5" />
+                    With Institutions ({auctions.filter(a => (a.institution_count || 0) > 0).length})
+                </button>
             </div>
 
             <div className="grid gap-4">
@@ -145,6 +160,9 @@ const AuctionReportPage: React.FC = () => {
                                 </span>
                                 <span className="bg-purple-50 text-purple-700 border border-purple-100 px-3 py-1 rounded-full text-xs font-bold">
                                     {auc.person_count || 0} Persons
+                                </span>
+                                <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1 rounded-full text-xs font-bold">
+                                    {auc.institution_count || 0} Institutions
                                 </span>
                                 {expandedIds.includes(auc.id) ? 
                                     <ChevronDown className="w-5 h-5 text-gray-400" /> : 
@@ -189,6 +207,17 @@ const AuctionReportPage: React.FC = () => {
                                         <User className="w-3.5 h-3.5" />
                                         Persons ({auc.person_count || 0})
                                     </button>
+                                    <button
+                                        onClick={() => setTabForAuction(auc.id, 'institutions')}
+                                        className={`pb-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
+                                            getActiveTab(auc.id, auc) === 'institutions'
+                                                ? 'border-indigo-600 text-indigo-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        <Landmark className="w-3.5 h-3.5" />
+                                        Institutions ({auc.institution_count || 0})
+                                    </button>
                                 </div>
 
                                 {getActiveTab(auc.id, auc) === 'artworks' ? (
@@ -228,7 +257,7 @@ const AuctionReportPage: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                ) : (
+                                ) : getActiveTab(auc.id, auc) === 'persons' ? (
                                     <div className="space-y-3">
                                         {(auc.persons || []).map(person => (
                                             <div key={person.id} className="p-4 bg-white border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-sm transition-all">
@@ -272,6 +301,56 @@ const AuctionReportPage: React.FC = () => {
                                         {(auc.persons || []).length === 0 && (
                                             <div className="text-center py-6 text-xs text-gray-500 italic">
                                                 No persons associated with this auction.
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {(auc.institutions || []).map(inst => (
+                                            <div key={inst.id} className="p-4 bg-white border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-sm transition-all">
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100 overflow-hidden shrink-0">
+                                                            <Landmark className="w-5 h-5 text-emerald-600" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm font-bold text-gray-900">
+                                                                    {inst.name}
+                                                                </span>
+                                                                {inst.place && (
+                                                                    <span className="text-xs text-gray-500">
+                                                                        ({inst.place})
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-1 mt-0.5">
+                                                                {inst.roles && inst.roles.length > 0 ? (
+                                                                    inst.roles.map((role, idx) => (
+                                                                        <span key={idx} className="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-700 font-semibold rounded border border-emerald-100 uppercase tracking-tight">
+                                                                            {role}
+                                                                        </span>
+                                                                    ))
+                                                                ) : (
+                                                                    <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-600 font-semibold rounded uppercase tracking-tight">
+                                                                        Participant
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {inst.notes && (
+                                                    <div className="mt-3 text-xs text-gray-600 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100 leading-relaxed italic">
+                                                        <span className="font-semibold text-gray-500 not-italic block mb-0.5 text-[10px] uppercase tracking-wider">Notes</span>
+                                                        "{inst.notes}"
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {(auc.institutions || []).length === 0 && (
+                                            <div className="text-center py-6 text-xs text-gray-500 italic">
+                                                No institutions associated with this auction.
                                             </div>
                                         )}
                                     </div>

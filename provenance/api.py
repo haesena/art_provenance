@@ -337,7 +337,7 @@ def institution_list(request):
     return JsonResponse({'results': data})
 
 def auction_list(request):
-    from .models import Auction, ProvenanceEvent, AuctionPerson
+    from .models import Auction, ProvenanceEvent, AuctionPerson, AuctionInstitution
     
     auctions = Auction.objects.all().order_by('name')
     
@@ -418,8 +418,41 @@ def auction_list(request):
                 'notes': " | ".join(notes_list)
             })
         persons_data.sort(key=lambda p: p['name'].lower())
+
+        # 3. Institutions
+        institution_map = {}
+        ai_qs = AuctionInstitution.objects.filter(auction=auction).select_related('institution')
+        for ai in ai_qs:
+            inst = ai.institution
+            if inst.id not in institution_map:
+                institution_map[inst.id] = {
+                    'id': inst.id,
+                    'name': inst.name,
+                    'place': inst.place or '',
+                    'roles': set(),
+                    'notes': []
+                }
+            role_disp = ai.get_role_display()
+            if role_disp:
+                institution_map[inst.id]['roles'].add(role_disp)
+
+        institutions_data = []
+        for inst_id, inst_info in institution_map.items():
+            notes_list = list(inst_info['notes'])
+            if not notes_list and auction.notes:
+                notes_list.append(auction.notes)
+            roles_list = sorted(list(inst_info['roles']))
+            institutions_data.append({
+                'id': inst_info['id'],
+                'name': inst_info['name'],
+                'place': inst_info['place'],
+                'roles': roles_list,
+                'role': ", ".join(roles_list),
+                'notes': " | ".join(notes_list)
+            })
+        institutions_data.sort(key=lambda i: i['name'].lower())
             
-        if artworks_data or persons_data:
+        if artworks_data or persons_data or institutions_data:
             data.append({
                 'id': auction.id,
                 'name': auction.name,
@@ -430,6 +463,8 @@ def auction_list(request):
                 'artwork_count': len(artworks_data),
                 'persons': persons_data,
                 'person_count': len(persons_data),
+                'institutions': institutions_data,
+                'institution_count': len(institutions_data),
             })
             
     return JsonResponse({'results': data})

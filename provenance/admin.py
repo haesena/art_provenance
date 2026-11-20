@@ -182,14 +182,69 @@ class ProvenanceEventSourceInline(admin.StackedInline):
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
 
+    def get_extra(self, request, obj=None, **kwargs):
+        if obj is None and request.method == 'GET':
+            copy_from = request.GET.get('copy_from')
+            if copy_from:
+                try:
+                    count = ProvenanceEventSource.objects.filter(event_id=int(copy_from)).count()
+                    if count > 0:
+                        return count
+                except (ValueError, TypeError):
+                    pass
+        return super().get_extra(request, obj, **kwargs)
+
+    def get_formset(self, request, obj=None, **kwargs):
+        FormSet = super().get_formset(request, obj, **kwargs)
+        if obj is None and request.method == 'GET':
+            copy_from = request.GET.get('copy_from')
+            if copy_from:
+                try:
+                    sources = list(
+                        ProvenanceEventSource.objects.filter(event_id=int(copy_from))
+                        .values('source', 'notes')
+                    )
+                    if sources:
+                        class InitialFormSet(FormSet):
+                            def __init__(self, *args, **fs_kwargs):
+                                fs_kwargs.setdefault('initial', sources)
+                                super().__init__(*args, **fs_kwargs)
+                        return InitialFormSet
+                except (ValueError, TypeError):
+                    pass
+        return FormSet
+
 @admin.register(ProvenanceEvent)
 class ProvenanceEventAdmin(admin.ModelAdmin):
     actions = None
+    change_form_template = 'admin/provenance/provenanceevent/change_form.html'
     list_display = ('artwork', 'sequence_number', 'event_type', 'date', 'person', 'institution', 'auction', 'exhibition')
     list_filter = ('event_type', 'certainty')
     ordering = ('artwork', 'sequence_number')
     search_fields = ('artwork__name', 'person__family_name', 'person__first_name', 'institution__name', 'notes')
     inlines = [ProvenanceEventSourceInline]
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        copy_from = request.GET.get('copy_from')
+        if copy_from:
+            try:
+                src = ProvenanceEvent.objects.get(pk=int(copy_from))
+                initial.update({
+                    'artwork': src.artwork_id,
+                    'event_type': src.event_type_id,
+                    'date': src.date,
+                    'person': src.person_id,
+                    'institution': src.institution_id,
+                    'auction': src.auction_id,
+                    'exhibition': src.exhibition_id,
+                    'certainty': src.certainty,
+                    'notes': src.notes,
+                })
+                initial.pop('sequence_number', None)
+            except (ProvenanceEvent.DoesNotExist, ValueError, TypeError):
+                pass
+        return initial
 
 @admin.register(ArtworkGroup)
 class ArtworkGroupAdmin(admin.ModelAdmin):

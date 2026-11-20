@@ -130,6 +130,18 @@ class ProvenanceEvent(models.Model):
         if len(active_actors) > 1:
             raise ValidationError("Only one of Institution, Auction, or Exhibition can be set.")
 
+        if self.artwork_id and self.sequence_number is not None:
+            duplicate_qs = ProvenanceEvent.objects.filter(
+                artwork_id=self.artwork_id,
+                sequence_number=self.sequence_number
+            )
+            if self.pk:
+                duplicate_qs = duplicate_qs.exclude(pk=self.pk)
+            if duplicate_qs.exists():
+                raise ValidationError({
+                    'sequence_number': f"An event with sequence number {self.sequence_number} already exists for this artwork."
+                })
+
     class Meta:
         ordering = ['sequence_number']
 

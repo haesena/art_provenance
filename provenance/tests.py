@@ -539,6 +539,64 @@ class GeneralDeletionProtectionTest(TestCase):
         self.assertEqual(Institution.objects.count(), 0)
         self.assertEqual(AuctionInstitution.objects.count(), 0)
 
+    def test_copy_provenance_event_admin_prepopulates_all_except_sequence(self):
+        from django.contrib.auth.models import User
+
+        admin_user = User.objects.create_superuser(username="super_admin", password="password", email="admin@example.com")
+        self.client.force_login(admin_user)
+
+        person = Person.objects.create(family_name="Dali", first_name="Salvador")
+        event_type = EventType.objects.create(name="Sale")
+        source = Source.objects.create(source="Catalog 1930")
+        event = ProvenanceEvent.objects.create(
+            artwork=self.artwork_1,
+            event_type=event_type,
+            sequence_number=5,
+            date="1930",
+            person=person,
+            institution=self.institution,
+            certainty="proven",
+            notes="Original event notes"
+        )
+        ProvenanceEventSource.objects.create(event=event, source=source, notes="Page 12")
+
+        change_url = reverse('admin:provenance_provenanceevent_change', args=[event.pk])
+        change_res = self.client.get(change_url)
+        self.assertEqual(change_res.status_code, 200)
+        add_url = reverse('admin:provenance_provenanceevent_add')
+        changelist_url = reverse('admin:provenance_provenanceevent_changelist')
+        self.assertContains(change_res, f'{add_url}?copy_from={event.pk}')
+        self.assertContains(change_res, 'Exit (without save)')
+        self.assertContains(change_res, changelist_url)
+
+        copy_res = self.client.get(f'{add_url}?copy_from={event.pk}')
+        self.assertEqual(copy_res.status_code, 200)
+        self.assertContains(copy_res, 'Exit (without save)')
+        adminform = copy_res.context['adminform'].form
+        self.assertIsNone(adminform.initial.get('sequence_number'))
+        self.assertEqual(adminform.initial.get('artwork'), self.artwork_1.id)
+        self.assertEqual(adminform.initial.get('event_type'), event_type.id)
+        self.assertEqual(adminform.initial.get('date'), "1930")
+        self.assertEqual(adminform.initial.get('person'), person.id)
+        self.assertEqual(adminform.initial.get('institution'), self.institution.id)
+        self.assertEqual(adminform.initial.get('certainty'), "proven")
+        self.assertEqual(adminform.initial.get('notes'), "Original event notes")
+
+        inline_formset = copy_res.context['inline_admin_formsets'][0].formset
+        self.assertEqual(inline_formset.forms[0].initial.get('source'), source.id)
+        self.assertEqual(inline_formset.forms[0].initial.get('notes'), "Page 12")
+
+        # Attempting to save with an existing (artwork, sequence_number) should return a validation error
+        duplicate_event = ProvenanceEvent(
+            artwork=self.artwork_1,
+            event_type=event_type,
+            sequence_number=5,
+            date="1931"
+        )
+        with self.assertRaises(ValidationError) as cm:
+            duplicate_event.full_clean()
+        self.assertIn("An event with sequence number 5 already exists for this artwork.", str(cm.exception))
+
 
 
 

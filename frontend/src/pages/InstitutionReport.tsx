@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getInstitutions, Institution } from '../services/api';
 import { Landmark, ChevronRight, ChevronDown, ImageIcon, Search, ArrowLeftRight, BookOpen, Gavel, Calendar } from 'lucide-react';
 import { getDeterministicColor } from '../utils/colorUtils';
 
 const InstitutionReport: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const targetIdParam = searchParams.get('id');
+    const targetId = targetIdParam ? parseInt(targetIdParam, 10) : null;
+
     const [institutions, setInstitutions] = useState<Institution[]>([]);
     const [loading, setLoading] = useState(true);
-    const [expandedIds, setExpandedIds] = useState<number[]>([]);
+    const [expandedIds, setExpandedIds] = useState<number[]>(targetId ? [targetId] : []);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<'all' | 'artworks' | 'auctions' | 'interactions'>('all');
     const [expandedTabs, setExpandedTabs] = useState<Record<number, 'artworks' | 'auctions' | 'interactions'>>({});
@@ -36,6 +40,18 @@ const InstitutionReport: React.FC = () => {
         };
         fetchInstitutions();
     }, []);
+
+    useEffect(() => {
+        if (!loading && targetId) {
+            setExpandedIds(prev => (prev.includes(targetId) ? prev : [...prev, targetId]));
+            setTimeout(() => {
+                const el = document.getElementById(`institution-${targetId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 50);
+        }
+    }, [loading, targetId]);
 
     const toggleExpand = (id: number) => {
         setExpandedIds(prev =>
@@ -132,7 +148,13 @@ const InstitutionReport: React.FC = () => {
 
             <div className="grid gap-4">
                 {filteredInstitutions.map((inst) => (
-                    <div key={inst.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div
+                        key={inst.id}
+                        id={`institution-${inst.id}`}
+                        className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 ${
+                            targetId === inst.id ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200'
+                        }`}
+                    >
                         <button
                             onClick={() => toggleExpand(inst.id)}
                             className="w-full text-left p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
@@ -250,7 +272,7 @@ const InstitutionReport: React.FC = () => {
                                                             {auc.name}
                                                         </h4>
                                                     </div>
-                                                    <div className="flex items-center gap-3 text-xs text-gray-500 my-2">
+                                                    <div className="flex items-center gap-3 text-xs text-gray-500 my-2 flex-wrap">
                                                         <span className="flex items-center gap-1">
                                                             <Calendar className="w-3.5 h-3.5 text-gray-400" />
                                                             {auc.date || 'Date unknown'}
@@ -259,6 +281,11 @@ const InstitutionReport: React.FC = () => {
                                                         <span className="bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded text-[10px]">
                                                             {auc.artwork_count} {auc.artwork_count === 1 ? 'Artwork' : 'Artworks'}
                                                         </span>
+                                                        {auc.roles && auc.roles.map((role, idx) => (
+                                                            <span key={idx} className="bg-purple-50 text-purple-700 border border-purple-100 font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-tight">
+                                                                {role}
+                                                            </span>
+                                                        ))}
                                                     </div>
                                                     {auc.notes && (
                                                         <p className="text-xs text-gray-600 italic bg-gray-50 p-2 rounded border border-gray-100 leading-relaxed mt-2">

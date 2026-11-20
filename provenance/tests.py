@@ -377,6 +377,9 @@ class InstitutionListAPITest(TestCase):
 
     def test_institution_list_includes_auctions(self):
         auction = Auction.objects.create(name="Louvre Special Sale", institution=self.inst, date="1900")
+        other_auction = Auction.objects.create(name="Paris Modern Sale", date="1910")
+        AuctionInstitution.objects.create(auction=other_auction, institution=self.inst, role="buyer")
+
         url = reverse('institution-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -384,8 +387,10 @@ class InstitutionListAPITest(TestCase):
         data = response.json()
         results = data['results']
         inst_data = next(i for i in results if i['id'] == self.inst.id)
-        self.assertEqual(inst_data['auction_count'], 1)
-        self.assertEqual(inst_data['auctions'][0]['name'], "Louvre Special Sale")
+        self.assertEqual(inst_data['auction_count'], 2)
+        auction_names = [a['name'] for a in inst_data['auctions']]
+        self.assertIn("Louvre Special Sale", auction_names)
+        self.assertIn("Paris Modern Sale", auction_names)
 
 
 class LookupAPITest(TestCase):
@@ -500,6 +505,39 @@ class GeneralDeletionProtectionTest(TestCase):
         with self.assertRaises(ProtectedError):
             self.institution.delete()
         self.assertTrue(Institution.objects.filter(id=self.institution.id).exists())
+
+    def test_overwrite_upload_deletes_interactions_and_auction_institutions(self):
+        from django.contrib.auth.models import User
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .models import InteractionSource
+
+        staff_user = User.objects.create_user(username="admin_test", password="password", is_staff=True)
+        self.client.force_login(staff_user)
+
+        person = Person.objects.create(family_name="Dali", first_name="Salvador")
+        source = Source.objects.create(source="Archive Doc")
+        interaction = Interaction.objects.create(
+            entity1_person=person,
+            entity2_institution=self.institution,
+            interaction_type="singular"
+        )
+        InteractionSource.objects.create(interaction=interaction, source=source)
+
+        auction = Auction.objects.create(name="Paris Sale", institution=self.institution)
+        AuctionPerson.objects.create(auction=auction, person=person, role="seller")
+        AuctionInstitution.objects.create(auction=auction, institution=self.institution, role="buyer")
+
+        dump_file = SimpleUploadedFile("dump.json", b"[]", content_type="application/json")
+        response = self.client.post(
+            reverse('admin_upload_db'),
+            {'mode': 'overwrite', 'db_file': dump_file},
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Interaction.objects.count(), 0)
+        self.assertEqual(Person.objects.count(), 0)
+        self.assertEqual(Institution.objects.count(), 0)
+        self.assertEqual(AuctionInstitution.objects.count(), 0)
 
 
 

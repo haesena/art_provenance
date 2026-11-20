@@ -86,14 +86,18 @@ def format_provenance_event(event):
         'type': event.event_type.name if event.event_type else '',
         'date': event.date,
         'person': person_name,
+        'person_id': event.person.id if event.person else None,
         'institution': institution_name,
+        'institution_id': event.institution.id if event.institution else None,
         'actor': actor_name,
         'auction': str(event.auction) if event.auction else '',
         'auction_id': event.auction.id if event.auction else None,
         'auction_institution': str(event.auction.institution) if event.auction and event.auction.institution else '',
+        'auction_institution_id': event.auction.institution.id if event.auction and event.auction.institution else None,
         'exhibition': str(event.exhibition) if event.exhibition else '',
         'exhibition_id': event.exhibition.id if event.exhibition else None,
         'exhibition_institution': str(event.exhibition.institution) if event.exhibition and event.exhibition.institution else '',
+        'exhibition_institution_id': event.exhibition.institution.id if event.exhibition and event.exhibition.institution else None,
         'certainty': event.get_certainty_display() if event.certainty else '',
         'sources': [
             {'source': str(ps.source), 'notes': ps.notes}
@@ -308,16 +312,24 @@ def institution_list(request):
         
         interactions_data = [format_interaction(i) for i in interactions_qs]
         
-        # Related auctions held at this institution
-        auctions_qs = Auction.objects.filter(institution=inst).prefetch_related('provenance_events')
+        # Related auctions held at this institution or where this institution is assigned in AuctionInstitution
+        auctions_qs = Auction.objects.filter(
+            Q(institution=inst) | Q(auction_institutions__institution=inst)
+        ).distinct().prefetch_related('provenance_events', 'auction_institutions')
         auctions_data = []
         for auc in auctions_qs:
             art_ids = set(e.artwork_id for e in auc.provenance_events.all())
+            roles = sorted(list(set(
+                ai.get_role_display()
+                for ai in auc.auction_institutions.all()
+                if ai.institution_id == inst.id and ai.get_role_display()
+            )))
             auctions_data.append({
                 'id': auc.id,
                 'name': auc.name,
                 'date': auc.date or '',
                 'artwork_count': len(art_ids),
+                'roles': roles,
                 'notes': auc.notes or ''
             })
         

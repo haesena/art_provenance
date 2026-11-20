@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getAuctionsReport, AuctionReport } from '../services/api';
 import { Gavel, ChevronRight, ChevronDown, ImageIcon, Search, Calendar, User, Landmark, Info } from 'lucide-react';
 import { getDeterministicColor } from '../utils/colorUtils';
 
 const AuctionReportPage: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const targetIdParam = searchParams.get('id');
+    const targetId = targetIdParam ? parseInt(targetIdParam, 10) : null;
+
     const [auctions, setAuctions] = useState<AuctionReport[]>([]);
     const [loading, setLoading] = useState(true);
-    const [expandedIds, setExpandedIds] = useState<number[]>([]);
+    const [expandedIds, setExpandedIds] = useState<number[]>(targetId ? [targetId] : []);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<'all' | 'artworks' | 'persons' | 'institutions'>('all');
     const [activeTabs, setActiveTabs] = useState<{ [key: number]: 'artworks' | 'persons' | 'institutions' }>({});
@@ -25,6 +29,18 @@ const AuctionReportPage: React.FC = () => {
         };
         fetchAuctions();
     }, []);
+
+    useEffect(() => {
+        if (!loading && targetId) {
+            setExpandedIds(prev => (prev.includes(targetId) ? prev : [...prev, targetId]));
+            setTimeout(() => {
+                const el = document.getElementById(`auction-${targetId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 50);
+        }
+    }, [loading, targetId]);
 
     const toggleExpand = (id: number) => {
         setExpandedIds(prev => 
@@ -133,7 +149,13 @@ const AuctionReportPage: React.FC = () => {
 
             <div className="grid gap-4">
                 {filteredAuctions.map((auc) => (
-                    <div key={auc.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div
+                        key={auc.id}
+                        id={`auction-${auc.id}`}
+                        className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 ${
+                            targetId === auc.id ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200'
+                        }`}
+                    >
                         <button 
                             onClick={() => toggleExpand(auc.id)}
                             className="w-full text-left p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"

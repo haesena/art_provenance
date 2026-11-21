@@ -1,0 +1,29 @@
+name: Promote develop-huub to main
+
+on:
+  push:
+    branches: [develop-huub]
+  workflow_dispatch:   # also allows a manual run from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: promote-main
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Merge develop-huub into main
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git merge --no-edit origin/develop-huub
+          git push origin main

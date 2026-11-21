@@ -1,6 +1,20 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { BookOpen, Database, BarChart2, LogOut, User as UserIcon, Settings, Menu, X } from 'lucide-react';
+import {
+    BookOpen,
+    Database,
+    LogOut,
+    User as UserIcon,
+    Settings,
+    Menu,
+    X,
+    Landmark,
+    Gavel,
+    Table,
+    FileText,
+    FileX,
+    ArrowLeftRight
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Layout: React.FC = () => {
@@ -19,7 +33,13 @@ const Layout: React.FC = () => {
     const navLinks = [
         { to: '/', icon: Database, label: 'Artworks', active: location.pathname === '/' || location.pathname.startsWith('/artworks') },
         { to: '/persons', icon: UserIcon, label: 'Persons', active: location.pathname.startsWith('/persons') },
-        { to: '/analysis', icon: BarChart2, label: 'Analysis', active: location.pathname.startsWith('/analysis') || location.pathname.startsWith('/analysis/interactions') },
+        { to: '/analysis/institutions', icon: Landmark, label: 'Institutions', active: location.pathname.startsWith('/analysis/institutions') },
+        { to: '/analysis/auctions', icon: Gavel, label: 'Auctions', active: location.pathname.startsWith('/analysis/auctions') },
+        { to: '/analysis/exhibitions', icon: BookOpen, label: 'Exhibitions', active: location.pathname.startsWith('/analysis/exhibitions') },
+        { to: '/analysis/sources', icon: FileText, label: 'Sources', active: location.pathname.startsWith('/analysis/sources') },
+        { to: '/analysis/events', icon: Table, label: 'All Events', active: location.pathname.startsWith('/analysis/events') },
+        { to: '/analysis/unused-sources', icon: FileX, label: 'Unused Sources', active: location.pathname.startsWith('/analysis/unused-sources') },
+        { to: '/analysis/interactions', icon: ArrowLeftRight, label: 'Interactions', active: location.pathname.startsWith('/analysis/interactions') },
     ];
 
     return (

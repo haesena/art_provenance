@@ -1,16 +1,20 @@
 import io
 import json
+import os
 import tempfile
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.management import call_command
 from django.contrib import messages
+from django.db import transaction
 from django.urls import reverse
 from django.shortcuts import render
 from .models import (
-    Artwork, Person, ProvenanceEvent, Institution, Auction, Exhibition, 
-    Source, ArtType, Medium, EventType, Image, ArtworkGroup, 
-    InstitutionType, ArtworkRelationship, AuctionPerson
+    Artwork, Person, ProvenanceEvent, ProvenanceEventSource,
+    Institution, Auction, AuctionPerson, AuctionInstitution,
+    Exhibition, Source, ArtType, Medium, EventType, Image,
+    ArtworkGroup, InstitutionType, ArtworkRelationship,
+    Interaction, InteractionSource
 )
 
 @staff_member_required
@@ -49,6 +53,7 @@ def upload_db_dump(request):
             messages.error(request, "No file uploaded.")
             return HttpResponseRedirect(reverse('admin_sync_db'))
 
+        temp_file_path = None
         try:
             # Save uploaded file to a temporary location
             with tempfile.NamedTemporaryFile(delete=False, suffix='.json', mode='wb') as temp_file:
@@ -56,32 +61,42 @@ def upload_db_dump(request):
                     temp_file.write(chunk)
                 temp_file_path = temp_file.name
 
-            if mode == 'overwrite':
-                # destructive operation: clear ALL provenance models first
-                # Order matters slightly for FKs, though loaddata is atomic.
-                # Wiping M2M through models or models with CASCADE FKs.
-                ProvenanceEvent.objects.all().delete()
-                ArtworkRelationship.objects.all().delete()
-                AuctionPerson.objects.all().delete()
-                Artwork.objects.all().delete()
-                Auction.objects.all().delete()
-                Exhibition.objects.all().delete()
-                Person.objects.all().delete()
-                Institution.objects.all().delete()
-                Source.objects.all().delete()
-                Medium.objects.all().delete()
-                ArtType.objects.all().delete()
-                EventType.objects.all().delete()
-                ArtworkGroup.objects.all().delete()
-                InstitutionType.objects.all().delete()
-                Image.objects.all().delete()
+            with transaction.atomic():
+                if mode == 'overwrite':
+                    # Destructive operation: clear ALL provenance models in dependency order
+                    # so protected foreign keys are removed before their referenced objects.
+                    ProvenanceEventSource.objects.all().delete()
+                    ProvenanceEvent.objects.all().delete()
+                    InteractionSource.objects.all().delete()
+                    Interaction.objects.all().delete()
+                    ArtworkRelationship.objects.all().delete()
+                    AuctionPerson.objects.all().delete()
+                    AuctionInstitution.objects.all().delete()
+                    Artwork.objects.all().delete()
+                    Auction.objects.all().delete()
+                    Exhibition.objects.all().delete()
+                    Person.objects.all().delete()
+                    Institution.objects.all().delete()
+                    Source.objects.all().delete()
+                    Medium.objects.all().delete()
+                    ArtType.objects.all().delete()
+                    EventType.objects.all().delete()
+                    ArtworkGroup.objects.all().delete()
+                    InstitutionType.objects.all().delete()
+                    Image.objects.all().delete()
 
-            # Load the data
-            call_command('loaddata', temp_file_path)
+                # Load the data
+                call_command('loaddata', temp_file_path)
             
             messages.success(request, f"Database synchronized successfully in {mode} mode.")
         except Exception as e:
             messages.error(request, f"Error synchronizing database: {str(e)}")
+        finally:
+            if temp_file_path and os.path.exists(temp_file_path):
+                try:
+                    os.remove(temp_file_path)
+                except OSError:
+                    pass
         
         return HttpResponseRedirect(reverse('admin_sync_db'))
     

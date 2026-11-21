@@ -61,14 +61,18 @@ export interface ProvenanceEvent {
   type: string;
   date: string | null;
   person: string;
+  person_id?: number | null;
   institution: string;
+  institution_id?: number | null;
   actor: string;
   auction?: string;
-  auction_id?: number;
+  auction_id?: number | null;
   auction_institution?: string;
+  auction_institution_id?: number | null;
   exhibition?: string;
-  exhibition_id?: number;
+  exhibition_id?: number | null;
   exhibition_institution?: string;
+  exhibition_institution_id?: number | null;
   certainty: string;
   sources: { source: string; notes?: string }[];
   notes: string;
@@ -112,6 +116,7 @@ export interface InstitutionAuctionInfo {
   name: string;
   date: string;
   artwork_count: number;
+  roles?: string[];
   notes?: string;
 }
 
@@ -197,6 +202,23 @@ export interface SourceReport {
     name: string;
     image: string | null;
     event_types: string[];
+  }[];
+  interaction_count?: number;
+  interactions?: Interaction[];
+  auction_count?: number;
+  auctions?: {
+    id: number;
+    name: string;
+    date: string;
+    institution: string;
+  }[];
+  exhibition_count?: number;
+  exhibitions?: {
+    id: number;
+    name: string;
+    date_start: string;
+    date_end: string;
+    institution: string;
   }[];
 }
 

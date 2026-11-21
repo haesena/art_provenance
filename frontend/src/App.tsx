@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import ArtworkList from './pages/ArtworkList';
 import ArtworkDetail from './pages/ArtworkDetail';
@@ -13,7 +13,6 @@ import SourceReport from './pages/SourceReport';
 import UnusedSourcesReport from './pages/UnusedSourcesReport';
 import EventReport from './pages/EventReport';
 import Interactions from './pages/Interactions';
-import { Landmark, Gavel, BookOpen as BookIcon, Table, FileText, FileX, ArrowLeftRight } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -52,91 +51,7 @@ const App: React.FC = () => {
           <Route path="artworks/:id" element={<ArtworkDetail />} />
           <Route path="persons" element={<PersonList />} />
           <Route path="persons/:id" element={<PersonDetail />} />
-          <Route path="analysis" element={
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Link to="/analysis/institutions" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-50 rounded-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <Landmark className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Institutions</h3>
-                    <p className="text-sm text-gray-500">Artworks grouped by institution.</p>
-                  </div>
-                </div>
-              </Link>
-              
-              <Link to="/analysis/auctions" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-amber-50 rounded-xl text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
-                    <Gavel className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Auctions</h3>
-                    <p className="text-sm text-gray-500">Artworks grouped by auction.</p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link to="/analysis/exhibitions" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-green-50 rounded-xl text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors">
-                    <BookIcon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Exhibitions</h3>
-                    <p className="text-sm text-gray-500">Artworks grouped by exhibition.</p>
-                  </div>
-                </div>
-              </Link>
-              <Link to="/analysis/sources" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-pink-50 rounded-xl text-pink-600 group-hover:bg-pink-600 group-hover:text-white transition-colors">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Sources</h3>
-                    <p className="text-sm text-gray-500">Artworks grouped by source.</p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link to="/analysis/events" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-purple-50 rounded-xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                    <Table className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">All Events</h3>
-                    <p className="text-sm text-gray-500">Flat tabular report of all events.</p>
-                  </div>
-                </div>
-              </Link>
-              <Link to="/analysis/unused-sources" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-orange-50 rounded-xl text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
-                    <FileX className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Unused Sources</h3>
-                    <p className="text-sm text-gray-500">Sources not linked to any event.</p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link to="/analysis/interactions" className="block p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <ArrowLeftRight className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Interactions</h3>
-                    <p className="text-sm text-gray-500">Manage relationships between persons and institutions.</p>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          } />
+          <Route path="analysis" element={<Navigate to="/analysis/institutions" replace />} />
           <Route path="analysis/institutions" element={<InstitutionReport />} />
           <Route path="analysis/auctions" element={<AuctionReport />} />
           <Route path="analysis/exhibitions" element={<ExhibitionReport />} />

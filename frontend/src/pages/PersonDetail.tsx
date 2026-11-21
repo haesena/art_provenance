@@ -172,6 +172,9 @@ const PersonDetailPage: React.FC = () => {
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold text-gray-500 font-mono">
+                                                        #{event.sequence}
+                                                    </span>
                                                     <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded uppercase tracking-wider">
                                                         {event.type}
                                                     </span>
@@ -208,28 +211,98 @@ const PersonDetailPage: React.FC = () => {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
-                                            <div className="space-y-3">
-                                                <div className="flex items-start gap-2.5">
-                                                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                                                    <div>
-                                                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-tight">Location / Actor</p>
-                                                        <p className="text-gray-900 italic font-medium">
-                                                            {event.institution || (event.auction ? `Auction: ${event.auction}` : event.exhibition ? `Exhibition: ${event.exhibition}` : event.actor)}
-                                                            {(event.auction_institution || event.exhibition_institution) &&
-                                                                ` at ${event.auction_institution || event.exhibition_institution}`
-                                                            }
-                                                        </p>
+                                            <div className="space-y-2">
+                                                {event.person && (
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <User className="w-4 h-4 text-gray-400 shrink-0" />
+                                                        <span className="text-gray-500 text-xs font-semibold uppercase tracking-tight">Person:</span>
+                                                        {event.person_id && event.person_id !== person.id ? (
+                                                            <Link to={`/persons/${event.person_id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium">
+                                                                {event.person}
+                                                            </Link>
+                                                        ) : (
+                                                            <span className="text-gray-900 font-medium">{event.person}</span>
+                                                        )}
                                                     </div>
-                                                </div>
+                                                )}
+                                                {event.institution && (
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
+                                                        <span className="text-gray-500 text-xs font-semibold uppercase tracking-tight">Institution:</span>
+                                                        {event.institution_id ? (
+                                                            <Link to={`/analysis/institutions?id=${event.institution_id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium">
+                                                                {event.institution}
+                                                            </Link>
+                                                        ) : (
+                                                            <span className="text-gray-900 font-medium">{event.institution}</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {event.exhibition && (
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <ImageIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                                                        <span className="text-gray-500 text-xs font-semibold uppercase tracking-tight">Exhibition:</span>
+                                                        <span className="text-gray-900 font-medium">
+                                                            {event.exhibition_id ? (
+                                                                <Link to={`/analysis/exhibitions?id=${event.exhibition_id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
+                                                                    {event.exhibition}
+                                                                </Link>
+                                                            ) : (
+                                                                event.exhibition
+                                                            )}
+                                                            {event.exhibition_institution && (
+                                                                <>
+                                                                    {' ('}
+                                                                    {event.exhibition_institution_id ? (
+                                                                        <Link to={`/analysis/institutions?id=${event.exhibition_institution_id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
+                                                                            {event.exhibition_institution}
+                                                                        </Link>
+                                                                    ) : (
+                                                                        event.exhibition_institution
+                                                                    )}
+                                                                    {')'}
+                                                                </>
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {event.auction && (
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <Gavel className="w-4 h-4 text-gray-400 shrink-0" />
+                                                        <span className="text-gray-500 text-xs font-semibold uppercase tracking-tight">Auction:</span>
+                                                        <span className="text-gray-900 font-medium">
+                                                            {event.auction_id ? (
+                                                                <Link to={`/analysis/auctions?id=${event.auction_id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
+                                                                    {event.auction}
+                                                                </Link>
+                                                            ) : (
+                                                                event.auction
+                                                            )}
+                                                            {event.auction_institution && (
+                                                                <>
+                                                                    {' ('}
+                                                                    {event.auction_institution_id ? (
+                                                                        <Link to={`/analysis/institutions?id=${event.auction_institution_id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
+                                                                            {event.auction_institution}
+                                                                        </Link>
+                                                                    ) : (
+                                                                        event.auction_institution
+                                                                    )}
+                                                                    {')'}
+                                                                </>
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            <div className="space-y-3">
+                                            <div className="space-y-2">
                                                 {event.notes && (
-                                                    <div className="flex items-start gap-2.5">
+                                                    <div className="flex items-start gap-2">
                                                         <Info className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                                                         <div>
-                                                            <p className="text-gray-500 text-xs font-semibold uppercase tracking-tight">Notes</p>
-                                                            <p className="text-gray-600 leading-relaxed italic">"{event.notes}"</p>
+                                                            <span className="text-gray-500 text-xs font-semibold uppercase tracking-tight mr-2">Notes:</span>
+                                                            <span className="text-gray-600 leading-relaxed italic">"{event.notes}"</span>
                                                         </div>
                                                     </div>
                                                 )}

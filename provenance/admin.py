@@ -182,14 +182,91 @@ class ProvenanceEventSourceInline(admin.StackedInline):
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
 
+    def get_extra(self, request, obj=None, **kwargs):
+        if obj is None and request.method == 'GET':
+            copy_from = request.GET.get('copy_from')
+            if copy_from:
+                try:
+                    count = ProvenanceEventSource.objects.filter(event_id=int(copy_from)).count()
+                    if count > 0:
+                        return count
+                except (ValueError, TypeError):
+                    pass
+        return super().get_extra(request, obj, **kwargs)
+
+    def get_formset(self, request, obj=None, **kwargs):
+        FormSet = super().get_formset(request, obj, **kwargs)
+        if obj is None and request.method == 'GET':
+            copy_from = request.GET.get('copy_from')
+            if copy_from:
+                try:
+                    sources = list(
+                        ProvenanceEventSource.objects.filter(event_id=int(copy_from))
+                        .values('source', 'notes')
+                    )
+                    if sources:
+                        class InitialFormSet(FormSet):
+                            def __init__(self, *args, **fs_kwargs):
+                                fs_kwargs.setdefault('initial', sources)
+                                super().__init__(*args, **fs_kwargs)
+                        return InitialFormSet
+                except (ValueError, TypeError):
+                    pass
+        return FormSet
+
 @admin.register(ProvenanceEvent)
 class ProvenanceEventAdmin(admin.ModelAdmin):
     actions = None
+    change_form_template = 'admin/provenance/provenanceevent/change_form.html'
     list_display = ('artwork', 'sequence_number', 'event_type', 'date', 'person', 'institution', 'auction', 'exhibition')
     list_filter = ('event_type', 'certainty')
     ordering = ('artwork', 'sequence_number')
     search_fields = ('artwork__name', 'person__family_name', 'person__first_name', 'institution__name', 'notes')
     inlines = [ProvenanceEventSourceInline]
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        copy_from = request.GET.get('copy_from')
+        if copy_from:
+            try:
+                src = ProvenanceEvent.objects.get(pk=int(copy_from))
+                initial.update({
+                    'artwork': src.artwork_id,
+                    'event_type': src.event_type_id,
+                    'date': src.date,
+                    'person': src.person_id,
+                    'institution': src.institution_id,
+                    'auction': src.auction_id,
+                    'exhibition': src.exhibition_id,
+                    'certainty': src.certainty,
+                    'notes': src.notes,
+                })
+                initial.pop('sequence_number', None)
+            except (ProvenanceEvent.DoesNotExist, ValueError, TypeError):
+                pass
+        return initial
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        obj = self.get_object(request, object_id)
+        if obj and obj.artwork_id is not None and obj.sequence_number is not None:
+            extra_context['prev_event'] = (
+                ProvenanceEvent.objects.filter(
+                    artwork_id=obj.artwork_id,
+                    sequence_number__lt=obj.sequence_number,
+                )
+                .order_by('-sequence_number', '-id')
+                .first()
+            )
+            extra_context['next_event'] = (
+                ProvenanceEvent.objects.filter(
+                    artwork_id=obj.artwork_id,
+                    sequence_number__gt=obj.sequence_number,
+                )
+                .order_by('sequence_number', 'id')
+                .first()
+            )
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
 @admin.register(ArtworkGroup)
 class ArtworkGroupAdmin(admin.ModelAdmin):

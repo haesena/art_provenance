@@ -1,0 +1,59 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+
+{% block object-tools-items %}
+{% if original %}
+<li>
+    {% if prev_event %}
+    <a href="{% url 'admin:provenance_provenanceevent_change' prev_event.pk %}" title="Sequence #{{ prev_event.sequence_number }}">
+        {% trans "Prev" %}
+    </a>
+    {% else %}
+    <a href="#" style="opacity: 0.4; pointer-events: none; cursor: default;">
+        {% trans "Prev" %}
+    </a>
+    {% endif %}
+</li>
+<li>
+    {% if next_event %}
+    <a href="{% url 'admin:provenance_provenanceevent_change' next_event.pk %}" title="Sequence #{{ next_event.sequence_number }}">
+        {% trans "Next" %}
+    </a>
+    {% else %}
+    <a href="#" style="opacity: 0.4; pointer-events: none; cursor: default;">
+        {% trans "Next" %}
+    </a>
+    {% endif %}
+</li>
+<li>
+    <a href="{% url 'admin:provenance_provenanceevent_add' %}?copy_from={{ original.pk }}">
+        {% trans "Copy" %}
+    </a>
+</li>
+{% endif %}
+{{ block.super }}
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+{{ block.super }}
+<a id="exit-without-save-btn" href="{% url opts|admin_urlname:'changelist' %}" class="closelink">
+    {% trans "Exit (without save)" %}
+</a>
+<script>
+    (function() {
+        var btn = document.getElementById('exit-without-save-btn');
+        var row = document.querySelector('.submit-row');
+        if (btn && row) {
+            var continueBtn = row.querySelector('input[name="_continue"]');
+            var deleteBtn = row.querySelector('.deletelink');
+            if (continueBtn && continueBtn.nextSibling) {
+                row.insertBefore(btn, continueBtn.nextSibling);
+            } else if (deleteBtn) {
+                row.insertBefore(btn, deleteBtn);
+            } else {
+                row.appendChild(btn);
+            }
+        }
+    })();
+</script>
+{% endblock %}

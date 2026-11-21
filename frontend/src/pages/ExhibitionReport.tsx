@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getExhibitionsReport, ExhibitionReport } from '../services/api';
 import { BookOpen, ChevronRight, ChevronDown, ImageIcon, Search, Calendar } from 'lucide-react';
 import { getDeterministicColor } from '../utils/colorUtils';
 
 const ExhibitionReportPage: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const targetIdParam = searchParams.get('id');
+    const targetId = targetIdParam ? parseInt(targetIdParam, 10) : null;
+
     const [exhibitions, setExhibitions] = useState<ExhibitionReport[]>([]);
     const [loading, setLoading] = useState(true);
-    const [expandedIds, setExpandedIds] = useState<number[]>([]);
+    const [expandedIds, setExpandedIds] = useState<number[]>(targetId ? [targetId] : []);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
@@ -23,6 +27,18 @@ const ExhibitionReportPage: React.FC = () => {
         };
         fetchExhibitions();
     }, []);
+
+    useEffect(() => {
+        if (!loading && targetId) {
+            setExpandedIds(prev => (prev.includes(targetId) ? prev : [...prev, targetId]));
+            setTimeout(() => {
+                const el = document.getElementById(`exhibition-${targetId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 50);
+        }
+    }, [loading, targetId]);
 
     const toggleExpand = (id: number) => {
         setExpandedIds(prev => 
@@ -64,7 +80,13 @@ const ExhibitionReportPage: React.FC = () => {
 
             <div className="grid gap-4">
                 {filteredExhibitions.map((exh) => (
-                    <div key={exh.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div
+                        key={exh.id}
+                        id={`exhibition-${exh.id}`}
+                        className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 ${
+                            targetId === exh.id ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200'
+                        }`}
+                    >
                         <button 
                             onClick={() => toggleExpand(exh.id)}
                             className="w-full text-left p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"

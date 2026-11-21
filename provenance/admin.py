@@ -246,6 +246,28 @@ class ProvenanceEventAdmin(admin.ModelAdmin):
                 pass
         return initial
 
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        obj = self.get_object(request, object_id)
+        if obj and obj.artwork_id is not None and obj.sequence_number is not None:
+            extra_context['prev_event'] = (
+                ProvenanceEvent.objects.filter(
+                    artwork_id=obj.artwork_id,
+                    sequence_number__lt=obj.sequence_number,
+                )
+                .order_by('-sequence_number', '-id')
+                .first()
+            )
+            extra_context['next_event'] = (
+                ProvenanceEvent.objects.filter(
+                    artwork_id=obj.artwork_id,
+                    sequence_number__gt=obj.sequence_number,
+                )
+                .order_by('sequence_number', 'id')
+                .first()
+            )
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
 @admin.register(ArtworkGroup)
 class ArtworkGroupAdmin(admin.ModelAdmin):
     actions = None

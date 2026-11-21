@@ -597,6 +597,53 @@ class GeneralDeletionProtectionTest(TestCase):
             duplicate_event.full_clean()
         self.assertIn("An event with sequence number 5 already exists for this artwork.", str(cm.exception))
 
+        # Prev / Next navigation links for the same artwork
+        prev_ev = ProvenanceEvent.objects.create(artwork=self.artwork_1, event_type=event_type, sequence_number=2)
+        next_ev = ProvenanceEvent.objects.create(artwork=self.artwork_1, event_type=event_type, sequence_number=8)
+        change_res_nav = self.client.get(change_url)
+        self.assertEqual(change_res_nav.context['prev_event'], prev_ev)
+        self.assertEqual(change_res_nav.context['next_event'], next_ev)
+        self.assertContains(change_res_nav, reverse('admin:provenance_provenanceevent_change', args=[prev_ev.pk]))
+        self.assertContains(change_res_nav, reverse('admin:provenance_provenanceevent_change', args=[next_ev.pk]))
+
+    def test_unused_sources_excludes_event_interaction_auction_and_exhibition_sources(self):
+        from .models import InteractionSource
+
+        s_event = Source.objects.create(source="Source Event")
+        s_interaction = Source.objects.create(source="Source Interaction")
+        s_auction = Source.objects.create(source="Source Auction")
+        s_exhibition = Source.objects.create(source="Source Exhibition")
+        s_unused = Source.objects.create(source="Source Truly Unused")
+
+        event_type = EventType.objects.create(name="Sale")
+        ev = ProvenanceEvent.objects.create(artwork=self.artwork_1, event_type=event_type, sequence_number=1)
+        ProvenanceEventSource.objects.create(event=ev, source=s_event)
+
+        person = Person.objects.create(family_name="Dali", first_name="Salvador")
+        inter = Interaction.objects.create(entity1_person=person, entity2_institution=self.institution, interaction_type="singular")
+        InteractionSource.objects.create(interaction=inter, source=s_interaction)
+
+        auc = Auction.objects.create(name="Test Auction")
+        auc.sources.add(s_auction)
+
+        exh = Exhibition.objects.create(name="Test Exhibition")
+        exh.sources.add(s_exhibition)
+
+        res = self.client.get(reverse('unused-sources'))
+        self.assertEqual(res.status_code, 200)
+        results = res.json()['results']
+        returned_ids = [r['id'] for r in results]
+        self.assertEqual(returned_ids, [s_unused.id])
+
+        src_report_res = self.client.get(reverse('source-list'))
+        self.assertEqual(src_report_res.status_code, 200)
+        src_results = {r['id']: r for r in src_report_res.json()['results']}
+        self.assertEqual(src_results[s_event.id]['artwork_count'], 1)
+        self.assertEqual(src_results[s_interaction.id]['interaction_count'], 1)
+        self.assertEqual(src_results[s_auction.id]['auction_count'], 1)
+        self.assertEqual(src_results[s_exhibition.id]['exhibition_count'], 1)
+        self.assertNotIn(s_unused.id, src_results)
+
 
 
 

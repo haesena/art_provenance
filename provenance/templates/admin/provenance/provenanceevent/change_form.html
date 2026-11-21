@@ -4,6 +4,28 @@
 {% block object-tools-items %}
 {% if original %}
 <li>
+    {% if prev_event %}
+    <a href="{% url 'admin:provenance_provenanceevent_change' prev_event.pk %}" title="Sequence #{{ prev_event.sequence_number }}">
+        {% trans "Prev" %}
+    </a>
+    {% else %}
+    <a href="#" style="opacity: 0.4; pointer-events: none; cursor: default;">
+        {% trans "Prev" %}
+    </a>
+    {% endif %}
+</li>
+<li>
+    {% if next_event %}
+    <a href="{% url 'admin:provenance_provenanceevent_change' next_event.pk %}" title="Sequence #{{ next_event.sequence_number }}">
+        {% trans "Next" %}
+    </a>
+    {% else %}
+    <a href="#" style="opacity: 0.4; pointer-events: none; cursor: default;">
+        {% trans "Next" %}
+    </a>
+    {% endif %}
+</li>
+<li>
     <a href="{% url 'admin:provenance_provenanceevent_add' %}?copy_from={{ original.pk }}">
         {% trans "Copy" %}
     </a>

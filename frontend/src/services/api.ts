@@ -203,6 +203,23 @@ export interface SourceReport {
     image: string | null;
     event_types: string[];
   }[];
+  interaction_count?: number;
+  interactions?: Interaction[];
+  auction_count?: number;
+  auctions?: {
+    id: number;
+    name: string;
+    date: string;
+    institution: string;
+  }[];
+  exhibition_count?: number;
+  exhibitions?: {
+    id: number;
+    name: string;
+    date_start: string;
+    date_end: string;
+    institution: string;
+  }[];
 }
 
 export interface PersonDetail extends Person {

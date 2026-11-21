@@ -57,7 +57,7 @@ const UnusedSourcesReport: React.FC = () => {
             </div>
 
             <p className="text-sm text-gray-500 -mt-2">
-                Sources that are not linked to any provenance event.
+                Sources that are not linked to any provenance event, interaction, auction, or exhibition.
             </p>
 
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -99,7 +99,7 @@ const UnusedSourcesReport: React.FC = () => {
             {filteredSources.length === 0 && (
                 <div className="text-center py-12 bg-white border border-dashed border-gray-300 rounded-2xl text-gray-500 italic">
                     {sources.length === 0
-                        ? 'All sources are linked to at least one provenance event.'
+                        ? 'All sources are linked to at least one provenance event, interaction, auction, or exhibition.'
                         : 'No sources found with the given search criteria.'}
                 </div>
             )}
